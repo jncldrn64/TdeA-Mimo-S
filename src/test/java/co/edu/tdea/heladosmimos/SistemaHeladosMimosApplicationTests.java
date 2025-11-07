@@ -1,10 +1,10 @@
-package TdeA.Mimo.S;
+package co.edu.tdea.heladosmimos;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ApplicationTests {
+class SistemaHeladosMimosApplicationTests {
 
 	@Test
 	void contextLoads() {
