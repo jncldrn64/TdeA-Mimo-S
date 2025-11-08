@@ -4,7 +4,11 @@ import co.edu.tdea.heladosmimos.web.entidades.enums.EstadoPedido;
 import co.edu.tdea.heladosmimos.web.entidades.enums.MetodoPago;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "pedidos")
 public class Pedido {

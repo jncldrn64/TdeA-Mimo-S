@@ -1,7 +1,11 @@
 package co.edu.tdea.heladosmimos.web.entidades;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "items_carrito")
 public class ItemCarrito {
