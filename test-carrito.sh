@@ -13,6 +13,10 @@ echo "=========================================="
 echo "   PRUEBAS DEL CARRITO DE COMPRAS"
 echo "=========================================="
 echo ""
+echo "Endpoints base: $BASE_URL"
+echo "Productos: $BASE_URL/productos"
+echo "Carrito: $BASE_URL/carrito"
+echo ""
 
 # Función para mostrar resultados
 check_result() {
