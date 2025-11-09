@@ -1,4 +1,4 @@
-package co.edu.tdea.heladosmimos.web.servicios;
+package co.edu.tdea.heladosmimos.web.servicios.requisitos.funcionales;
 
 import co.edu.tdea.heladosmimos.web.entidades.Usuario;
 import co.edu.tdea.heladosmimos.web.puertos.RepositorioUsuario;

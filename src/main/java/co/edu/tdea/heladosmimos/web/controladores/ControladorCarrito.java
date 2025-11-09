@@ -1,9 +1,9 @@
-package co.edu.tdea.heladosmimos.web;
+package co.edu.tdea.heladosmimos.web.controladores;
 
 import co.edu.tdea.heladosmimos.web.entidades.ItemCarrito;
 import co.edu.tdea.heladosmimos.web.entidades.Producto;
 import co.edu.tdea.heladosmimos.web.puertos.RepositorioProducto;
-import co.edu.tdea.heladosmimos.web.seguridad.casosdeuso.CasoDeUsoAccesoCarrito;
+import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoAccesoCarrito;
 import co.edu.tdea.heladosmimos.web.servicios.requisitos.funcionales.ServicioCarritoCompras;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
