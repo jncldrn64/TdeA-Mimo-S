@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpSession;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,22 +21,24 @@ import java.util.Map;
 
 /**
  * PROPÓSITO: Gestionar peticiones HTTP relacionadas con el carrito de compras
- * 
+ *
  * DECISIÓN TÉCNICA:
  * - Todas las operaciones pasan por CasoDeUsoAccesoCarrito (validación de seguridad)
  * - Manejo de errores con try-catch para mostrar mensajes al usuario
  * - Enriquece items del carrito con datos completos del producto para la vista
- * 
+ * - ID de producto en edición se guarda en sesión HTTP (no en variable de instancia)
+ *
  * DEPENDENCIAS:
  * - CasoDeUsoAccesoCarrito: Punto de entrada validado
  * - ServicioCarritoCompras: Para obtener contador de items (navbar)
  * - RepositorioProducto: Para obtener detalles completos de productos
- * 
+ *
  * CONEXIÓN CON OTROS MÓDULOS:
  * - carrito.html: Template de vista del carrito
  * - base.html: Muestra contador de items en navbar
- * 
+ *
  * GENERADO POR: Claude - 2024-11-08
+ * CORREGIDO POR: Claude - 2024-11-09 (bug variable compartida)
  */
 @Controller
 @RequestMapping("/carrito")
@@ -49,26 +52,26 @@ public class ControladorCarrito {
     
     @Autowired
     private RepositorioProducto repositorioProducto;
-    
-    private Long idProductoEnEdicion = null;
-    
+
     /**
      * Muestra la vista del carrito con items y total
      */
     @GetMapping
-    public String mostrarCarrito(Model model) {
+    public String mostrarCarrito(HttpSession sesion, Model model) {
         try {
-            List<ItemCarrito> items = (List<ItemCarrito>) casoDeUsoAccesoCarrito.ejecutarObtenerCarrito();
+            List<ItemCarrito> items = casoDeUsoAccesoCarrito.ejecutarObtenerCarrito();
             Double total = casoDeUsoAccesoCarrito.ejecutarObtenerTotal();
-            
+
             // Enriquecer items con datos completos del producto
             List<Map<String, Object>> itemsEnriquecidos = enriquecerItemsConProductos(items);
-            
+
+            Long idProductoEnEdicion = (Long) sesion.getAttribute("idProductoEnEdicion");
+
             model.addAttribute("carrito", itemsEnriquecidos);
             model.addAttribute("totalFinal", total);
             model.addAttribute("idProductoEnEdicion", idProductoEnEdicion);
             model.addAttribute("cantidadTotalItems", servicioCarritoCompras.contarTotalDeProductos());
-            
+
             return "carrito";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
@@ -96,21 +99,22 @@ public class ControladorCarrito {
      * Prepara la edición de un item (guarda ID y recarga vista)
      */
     @PostMapping("/preparar-edicion")
-    public String prepararEdicion(@RequestParam Long idProducto) {
-        idProductoEnEdicion = idProducto;
+    public String prepararEdicion(@RequestParam Long idProducto, HttpSession sesion) {
+        sesion.setAttribute("idProductoEnEdicion", idProducto);
         return "redirect:/carrito";
     }
-    
+
     /**
      * Confirma la edición de cantidad de un item
      */
     @PostMapping("/editar")
-    public String editarCantidad(@RequestParam Long idProducto, 
+    public String editarCantidad(@RequestParam Long idProducto,
                                   @RequestParam Integer nuevaCantidad,
+                                  HttpSession sesion,
                                   Model model) {
         try {
             casoDeUsoAccesoCarrito.ejecutarModificarCantidad(idProducto, nuevaCantidad);
-            idProductoEnEdicion = null;
+            sesion.removeAttribute("idProductoEnEdicion");
             return "redirect:/carrito";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
