@@ -26,4 +26,7 @@ public class Usuario {
     private LocalDateTime fechaRegistro;
     @Column(name = "esta_activo")
     private Boolean estaActivo;
+    private String telefono;
+    private String direccion;
+    private String nit;
 }
