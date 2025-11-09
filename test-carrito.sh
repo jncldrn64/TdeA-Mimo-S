@@ -4,10 +4,14 @@
 # Valida: excepciones personalizadas, transacciones, lógica de negocio
 
 BASE_URL="http://localhost:8080/api"
+COOKIES="/tmp/test-carrito-cookies.txt"
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Limpiar cookies anteriores
+rm -f $COOKIES
 
 echo "=========================================="
 echo "   PRUEBAS DEL CARRITO DE COMPRAS"
@@ -16,6 +20,7 @@ echo ""
 echo "Endpoints base: $BASE_URL"
 echo "Productos: $BASE_URL/productos"
 echo "Carrito: $BASE_URL/carrito"
+echo "Cookies: $COOKIES"
 echo ""
 
 # Función para mostrar resultados
@@ -67,7 +72,7 @@ echo ""
 
 # TEST 4: Agregar producto válido al carrito
 echo -e "${YELLOW}[4/12] Agregando producto válido al carrito (ID: $ID_PRODUCTO1, cantidad: 2)...${NC}"
-AGREGAR=$(curl -s -X POST "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO1&cantidad=2")
+AGREGAR=$(curl -s -b $COOKIES -c $COOKIES -X POST "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO1&cantidad=2")
 if echo $AGREGAR | grep -q '"success":true'; then
     check_result 0 "Producto agregado correctamente"
 else
@@ -78,7 +83,7 @@ echo ""
 
 # TEST 5: Verificar que el carrito tiene items
 echo -e "${YELLOW}[5/12] Obteniendo carrito...${NC}"
-CARRITO=$(curl -s "$BASE_URL/carrito")
+CARRITO=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito")
 ITEMS=$(echo $CARRITO | grep -o '"cantidadItems":[0-9]*' | grep -o '[0-9]*')
 if [ "$ITEMS" = "2" ]; then
     check_result 0 "Carrito tiene $ITEMS items"
@@ -89,7 +94,7 @@ echo ""
 
 # TEST 6: Modificar cantidad de un producto en el carrito
 echo -e "${YELLOW}[6/12] Modificando cantidad a 5...${NC}"
-MODIFICAR=$(curl -s -X POST "$BASE_URL/carrito/modificar?idProducto=$ID_PRODUCTO1&nuevaCantidad=5")
+MODIFICAR=$(curl -s -b $COOKIES -c $COOKIES -X POST "$BASE_URL/carrito/modificar?idProducto=$ID_PRODUCTO1&nuevaCantidad=5")
 if echo $MODIFICAR | grep -q '"success":true'; then
     check_result 0 "Cantidad modificada correctamente"
 else
@@ -100,9 +105,9 @@ echo ""
 
 # TEST 7: Agregar otro producto
 echo -e "${YELLOW}[7/12] Agregando segundo producto (ID: $ID_PRODUCTO2, cantidad: 3)...${NC}"
-AGREGAR2=$(curl -s -X POST "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO2&cantidad=3")
+AGREGAR2=$(curl -s -b $COOKIES -c $COOKIES -X POST "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO2&cantidad=3")
 if echo $AGREGAR2 | grep -q '"success":true'; then
-    CARRITO2=$(curl -s "$BASE_URL/carrito")
+    CARRITO2=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito")
     ITEMS2=$(echo $CARRITO2 | grep -o '"cantidadItems":[0-9]*' | grep -o '[0-9]*')
     if [ "$ITEMS2" = "8" ]; then
         check_result 0 "Segundo producto agregado (total: $ITEMS2 items)"
@@ -146,9 +151,9 @@ echo ""
 
 # TEST 11: Eliminar producto del carrito
 echo -e "${YELLOW}[11/12] Eliminando producto del carrito (ID: $ID_PRODUCTO2)...${NC}"
-ELIMINAR=$(curl -s -X DELETE "$BASE_URL/carrito/eliminar/$ID_PRODUCTO2")
+ELIMINAR=$(curl -s -b $COOKIES -c $COOKIES -X DELETE "$BASE_URL/carrito/eliminar/$ID_PRODUCTO2")
 if echo $ELIMINAR | grep -q '"success":true'; then
-    CARRITO3=$(curl -s "$BASE_URL/carrito")
+    CARRITO3=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito")
     ITEMS3=$(echo $CARRITO3 | grep -o '"cantidadItems":[0-9]*' | grep -o '[0-9]*')
     if [ "$ITEMS3" = "5" ]; then
         check_result 0 "Producto eliminado (quedan $ITEMS3 items)"
@@ -162,9 +167,9 @@ echo ""
 
 # TEST 12: Vaciar carrito
 echo -e "${YELLOW}[12/12] Vaciando carrito...${NC}"
-VACIAR=$(curl -s -X DELETE "$BASE_URL/carrito/vaciar")
+VACIAR=$(curl -s -b $COOKIES -c $COOKIES -X DELETE "$BASE_URL/carrito/vaciar")
 if echo $VACIAR | grep -q '"success":true'; then
-    CARRITO_VACIO=$(curl -s "$BASE_URL/carrito")
+    CARRITO_VACIO=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito")
     ITEMS_FINAL=$(echo $CARRITO_VACIO | grep -o '"cantidadItems":[0-9]*' | grep -o '[0-9]*')
     if [ "$ITEMS_FINAL" = "0" ]; then
         check_result 0 "Carrito vaciado correctamente (0 items)"
