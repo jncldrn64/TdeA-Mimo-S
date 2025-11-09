@@ -1,9 +1,9 @@
 package co.edu.tdea.heladosmimos.web.controladores;
 
 import co.edu.tdea.heladosmimos.web.entidades.Usuario;
-import co.edu.tdea.heladosmimos.web.seguridad.casosdeuso.CasoDeUsoLogin;
-import co.edu.tdea.heladosmimos.web.seguridad.casosdeuso.CasoDeUsoIniciarRegistro;
-import co.edu.tdea.heladosmimos.web.seguridad.casosdeuso.CasoDeUsoCompletarRegistro;
+import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoLogin;
+import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoIniciarRegistro;
+import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoCompletarRegistro;
 import co.edu.tdea.heladosmimos.web.excepciones.CredencialesInvalidasException;
 import co.edu.tdea.heladosmimos.web.excepciones.CorreoYaRegistradoException;
 import org.springframework.beans.factory.annotation.Autowired;

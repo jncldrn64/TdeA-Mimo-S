@@ -1,7 +1,7 @@
 package co.edu.tdea.heladosmimos.web.controladores;
 
 import co.edu.tdea.heladosmimos.web.entidades.ItemCarrito;
-import co.edu.tdea.heladosmimos.web.seguridad.casosdeuso.CasoDeUsoAccesoCarrito;
+import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoAccesoCarrito;
 import co.edu.tdea.heladosmimos.web.servicios.requisitos.funcionales.ServicioCarritoCompras;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

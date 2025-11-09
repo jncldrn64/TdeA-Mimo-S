@@ -1,4 +1,4 @@
-package co.edu.tdea.heladosmimos.web.seguridad.casosdeuso;
+package co.edu.tdea.heladosmimos.web.casosdeuso;
 
 import co.edu.tdea.heladosmimos.web.entidades.ItemCarrito;
 import co.edu.tdea.heladosmimos.web.excepciones.*;
