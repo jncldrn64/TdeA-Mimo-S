@@ -63,7 +63,7 @@ public class ControladorAutenticacionREST {
         respuesta.put("mensaje", "Usuario registrado exitosamente");
         respuesta.put("usuario", Map.of(
             "idUsuario", usuario.getIdUsuario(),
-            "correo", usuario.getCorreo(),
+            "correo", usuario.getCorreoElectronico(),
             "nombre", usuario.getNombre() + " " + usuario.getApellido()
         ));
 
@@ -84,7 +84,7 @@ public class ControladorAutenticacionREST {
         respuesta.put("mensaje", "Login exitoso");
         respuesta.put("usuario", Map.of(
             "idUsuario", usuario.getIdUsuario(),
-            "correo", usuario.getCorreo(),
+            "correo", usuario.getCorreoElectronico(),
             "nombre", usuario.getNombre() + " " + usuario.getApellido()
         ));
 
@@ -112,7 +112,7 @@ public class ControladorAutenticacionREST {
             respuesta.put("autenticado", true);
             respuesta.put("usuario", Map.of(
                 "idUsuario", usuario.getIdUsuario(),
-                "correo", usuario.getCorreo(),
+                "correo", usuario.getCorreoElectronico(),
                 "nombre", usuario.getNombre() + " " + usuario.getApellido()
             ));
         } else {
