@@ -106,6 +106,24 @@ public class ManejadorGlobalExcepciones {
         return construirRespuestaError(ex, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(FacturaYaExisteException.class)
+    public ResponseEntity<Map<String, Object>> manejarFacturaYaExiste(FacturaYaExisteException ex) {
+        logger.warn("Factura ya existe: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(FacturaNoEncontradaException.class)
+    public ResponseEntity<Map<String, Object>> manejarFacturaNoEncontrada(FacturaNoEncontradaException ex) {
+        logger.warn("Factura no encontrada: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(DatosFacturacionInvalidosException.class)
+    public ResponseEntity<Map<String, Object>> manejarDatosFacturacionInvalidos(DatosFacturacionInvalidosException ex) {
+        logger.warn("Datos de facturación inválidos: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<Map<String, Object>> manejarErrorPersistencia(DataAccessException ex) {
         logger.error("Error de persistencia: {}", ex.getMessage(), ex);

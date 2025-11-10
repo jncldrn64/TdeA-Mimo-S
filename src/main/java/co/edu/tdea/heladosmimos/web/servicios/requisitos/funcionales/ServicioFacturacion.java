@@ -1,7 +1,7 @@
 package co.edu.tdea.heladosmimos.web.servicios.requisitos.funcionales;
 
 import co.edu.tdea.heladosmimos.web.entidades.*;
-import co.edu.tdea.heladosmimos.web.entidades.DatosFacturacion; // ⭐ IMPORT EXPLÍCITO
+import co.edu.tdea.heladosmimos.web.excepciones.*;
 import co.edu.tdea.heladosmimos.web.puertos.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -51,24 +51,26 @@ public class ServicioFacturacion {
      * - Usuario debe existir
      * - Datos fiscales completos
      */
-    public Factura generarFacturaParaPedido(Long idPedido, DatosFacturacion datosFacturacion) {
-        
+    public Factura generarFacturaParaPedido(Long idPedido, DatosFacturacion datosFacturacion)
+            throws ProductoNoEncontradoException, FacturaYaExisteException,
+                   DatosFacturacionInvalidosException {
+
         // Validar que el pedido existe (RepositorioPedido retorna Optional)
         Pedido pedido = repositorioPedido.buscarPorId(idPedido)
-            .orElseThrow(() -> new IllegalArgumentException(
+            .orElseThrow(() -> new ProductoNoEncontradoException(
                 "No existe pedido con ID: " + idPedido));
-        
+
         // Validar que no exista factura previa
         if (repositorioFactura.existeFacturaParaPedido(idPedido)) {
-            throw new IllegalStateException(
+            throw new FacturaYaExisteException(
                 "El pedido " + idPedido + " ya tiene una factura generada");
         }
-        
+
         // Obtener usuario (RepositorioUsuario retorna Usuario directo)
         Usuario usuario = repositorioUsuario.buscarPorId(pedido.getIdUsuario());
-        
+
         if (usuario == null) {
-            throw new IllegalArgumentException(
+            throw new ProductoNoEncontradoException(
                 "No existe usuario con ID: " + pedido.getIdUsuario());
         }
         
@@ -148,18 +150,18 @@ public class ServicioFacturacion {
     /**
      * Obtiene factura por ID de pedido.
      */
-    public Factura obtenerFacturaDePedido(Long idPedido) {
+    public Factura obtenerFacturaDePedido(Long idPedido) throws FacturaNoEncontradaException {
         return repositorioFactura.buscarPorIdPedido(idPedido)
-            .orElseThrow(() -> new IllegalArgumentException(
+            .orElseThrow(() -> new FacturaNoEncontradaException(
                 "No existe factura para el pedido: " + idPedido));
     }
-    
+
     /**
      * Obtiene factura por número.
      */
-    public Factura obtenerFacturaPorNumero(String numeroFactura) {
+    public Factura obtenerFacturaPorNumero(String numeroFactura) throws FacturaNoEncontradaException {
         return repositorioFactura.buscarPorNumeroFactura(numeroFactura)
-            .orElseThrow(() -> new IllegalArgumentException(
+            .orElseThrow(() -> new FacturaNoEncontradaException(
                 "No existe factura con número: " + numeroFactura));
     }
 }

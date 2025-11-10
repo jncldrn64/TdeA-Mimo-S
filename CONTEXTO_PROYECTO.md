@@ -495,6 +495,50 @@ vaciarCarritoCompleto();
 
 **Resultado:** Checkout ahora limpia ambos: memoria (@SessionScope) y base de datos.
 
+### Cambio 11: Implementación RF-04 Facturación + Corrección Arquitectónica
+**Problema:** Código de facturación inicial violaba arquitectura hexagonal
+**Solución:** Refactorización completa siguiendo patrones establecidos
+
+**Archivos creados:**
+- `FacturaYaExisteException.java` - Excepción personalizada
+- `FacturaNoEncontradaException.java` - Excepción personalizada
+- `DatosFacturacionInvalidosException.java` - Excepción personalizada
+- `CasoDeUsoGenerarFactura.java` - Orquestación
+- `CasoDeUsoConsultarFactura.java` - Orquestación
+- `AdaptadorRepositorioPedido.java` - Implementación JPA (faltaba)
+
+**Archivos corregidos:**
+- `DatosFacturacion.java` - Eliminado import recursivo
+- `ServicioFacturacion.java` - Excepciones personalizadas + throws
+- `ControladorFacturacion.java` - Usa casos de uso, elimina try-catch
+- `ManejadorGlobalExcepciones.java` - 3 handlers nuevos
+- `.gitignore` - Agregadas reglas para Gradle y archivos temporales
+
+**Archivos eliminados del repositorio:**
+- `.gradle/**` - Caché de Gradle (8 archivos)
+- `chill.sh` - Script temporal
+- `casosdeuso/.lock` - Archivo lock
+
+**Flujo RF-04 (Facturación):**
+1. Usuario completa pago exitoso
+2. Redirige a `/factura/formulario/{idPedido}`
+3. Usuario completa datos fiscales (NIT, razón social, dirección)
+4. POST `/factura/generar`
+5. Sistema genera factura con IVA 19% automático
+6. Muestra factura generada
+
+**Características:**
+- IVA Colombia: 19% (tarifa estándar)
+- Número de factura: FACT-YYYYMMDD-XXXXX (auto-generado)
+- Validación: un pedido = una factura máximo
+- Arquitectura hexagonal: Controlador → Caso de Uso → Servicio → Adaptador
+
+**Razón de la corrección:**
+- Código original no seguía flujo arquitectónico (acceso directo a servicio)
+- Usaba excepciones genéricas (IllegalArgumentException)
+- Bloques try-catch en controlador (anti-patrón)
+- Faltaba adaptador JPA para Pedido (no compilaba)
+
 ---
 
 ## 📝 Convenciones de Código (OBLIGATORIAS)
