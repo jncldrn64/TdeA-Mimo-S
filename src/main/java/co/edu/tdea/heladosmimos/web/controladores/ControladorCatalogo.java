@@ -39,15 +39,4 @@ public class ControladorCatalogo {
 
         return "catalogo";
     }
-
-    @GetMapping("/")
-    public String redirigirACatalogo(HttpSession session) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-
-        if (usuario == null) {
-            return "redirect:/login";
-        }
-
-        return "redirect:/catalogo";
-    }
 }
