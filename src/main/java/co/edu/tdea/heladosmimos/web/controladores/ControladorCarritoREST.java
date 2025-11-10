@@ -1,9 +1,12 @@
 package co.edu.tdea.heladosmimos.web.controladores;
 
 import co.edu.tdea.heladosmimos.web.entidades.ItemCarrito;
+import co.edu.tdea.heladosmimos.web.entidades.Pedido;
+import co.edu.tdea.heladosmimos.web.entidades.Usuario;
 import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoAccesoCarrito;
 import co.edu.tdea.heladosmimos.web.excepciones.*;
 import co.edu.tdea.heladosmimos.web.servicios.requisitos.funcionales.ServicioCarritoCompras;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -105,16 +108,29 @@ public class ControladorCarritoREST {
     }
 
     @PostMapping("/checkout")
-    public ResponseEntity<?> procesarCheckout()
+    public ResponseEntity<?> procesarCheckout(HttpSession sesion)
             throws CarritoVacioException, StockInsuficienteException,
                    ProductoNoEncontradoException, ProductoNoDisponibleException,
                    ConflictoConcurrenciaException {
 
-        servicioCarritoCompras.procesarCheckout();
+        // Obtener usuario de la sesión
+        Usuario usuario = (Usuario) sesion.getAttribute("usuario");
+
+        if (usuario == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", "Usuario no autenticado");
+            return ResponseEntity.status(401).body(error);
+        }
+
+        // Procesar checkout y crear pedido
+        Pedido pedido = servicioCarritoCompras.procesarCheckout(usuario);
 
         Map<String, Object> respuesta = new HashMap<>();
         respuesta.put("success", true);
         respuesta.put("mensaje", "Checkout procesado exitosamente. Stock actualizado y carrito vaciado.");
+        respuesta.put("idPedido", pedido.getIdPedido());
+        respuesta.put("total", pedido.getTotal());
 
         return ResponseEntity.ok(respuesta);
     }

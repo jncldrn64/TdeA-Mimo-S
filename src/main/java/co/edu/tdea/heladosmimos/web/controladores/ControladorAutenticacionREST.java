@@ -64,7 +64,8 @@ public class ControladorAutenticacionREST {
         respuesta.put("usuario", Map.of(
             "idUsuario", usuario.getIdUsuario(),
             "correo", usuario.getCorreoElectronico(),
-            "nombre", usuario.getNombre() + " " + usuario.getApellido()
+            "nombre", usuario.getNombre() + " " + usuario.getApellido(),
+            "rol", usuario.getRol().toString()
         ));
 
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
@@ -85,7 +86,8 @@ public class ControladorAutenticacionREST {
         respuesta.put("usuario", Map.of(
             "idUsuario", usuario.getIdUsuario(),
             "correo", usuario.getCorreoElectronico(),
-            "nombre", usuario.getNombre() + " " + usuario.getApellido()
+            "nombre", usuario.getNombre() + " " + usuario.getApellido(),
+            "rol", usuario.getRol().toString()
         ));
 
         return ResponseEntity.ok(respuesta);
@@ -113,7 +115,8 @@ public class ControladorAutenticacionREST {
             respuesta.put("usuario", Map.of(
                 "idUsuario", usuario.getIdUsuario(),
                 "correo", usuario.getCorreoElectronico(),
-                "nombre", usuario.getNombre() + " " + usuario.getApellido()
+                "nombre", usuario.getNombre() + " " + usuario.getApellido(),
+                "rol", usuario.getRol().toString()
             ));
         } else {
             respuesta.put("autenticado", false);
