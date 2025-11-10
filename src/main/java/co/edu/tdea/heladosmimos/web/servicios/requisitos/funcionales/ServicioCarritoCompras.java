@@ -2,7 +2,11 @@ package co.edu.tdea.heladosmimos.web.servicios.requisitos.funcionales;
 
 import co.edu.tdea.heladosmimos.web.entidades.Carrito;
 import co.edu.tdea.heladosmimos.web.entidades.ItemCarrito;
+import co.edu.tdea.heladosmimos.web.entidades.Pedido;
 import co.edu.tdea.heladosmimos.web.entidades.Producto;
+import co.edu.tdea.heladosmimos.web.entidades.Usuario;
+import co.edu.tdea.heladosmimos.web.entidades.enums.EstadoPedido;
+import co.edu.tdea.heladosmimos.web.entidades.enums.MetodoPago;
 import co.edu.tdea.heladosmimos.web.excepciones.CantidadInvalidaException;
 import co.edu.tdea.heladosmimos.web.excepciones.CarritoVacioException;
 import co.edu.tdea.heladosmimos.web.excepciones.ConflictoConcurrenciaException;
@@ -12,6 +16,7 @@ import co.edu.tdea.heladosmimos.web.excepciones.StockInsuficienteException;
 import jakarta.persistence.OptimisticLockException;
 import co.edu.tdea.heladosmimos.web.puertos.RepositorioCarrito;
 import co.edu.tdea.heladosmimos.web.puertos.RepositorioItemCarrito;
+import co.edu.tdea.heladosmimos.web.puertos.RepositorioPedido;
 import co.edu.tdea.heladosmimos.web.puertos.RepositorioProducto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +49,9 @@ public class ServicioCarritoCompras {
 
     @Autowired
     private RepositorioItemCarrito repositorioItemCarrito;
+
+    @Autowired
+    private RepositorioPedido repositorioPedido;
 
     public void agregarProductoAlCarrito(Long idProducto, Integer cantidad)
             throws ProductoNoEncontradoException, ProductoNoDisponibleException, StockInsuficienteException {
@@ -192,7 +200,7 @@ public class ServicioCarritoCompras {
     }
 
     @Transactional
-    public void procesarCheckout()
+    public Pedido procesarCheckout(Usuario usuario)
             throws CarritoVacioException, StockInsuficienteException,
                    ProductoNoEncontradoException, ProductoNoDisponibleException,
                    ConflictoConcurrenciaException {
@@ -225,6 +233,28 @@ public class ServicioCarritoCompras {
                 repositorioProducto.guardar(producto);
             }
 
+            // Crear pedido con los datos del carrito
+            Pedido pedido = new Pedido();
+            pedido.setIdUsuario(usuario.getIdUsuario());
+            pedido.setEstadoPedido(EstadoPedido.PAGO_CONFIRMADO);
+            pedido.setMetodoPago(MetodoPago.TARJETA_CREDITO_EN_LINEA); // Por defecto, se puede parametrizar después
+            pedido.setFechaCreacion(LocalDateTime.now());
+            pedido.setFechaConfirmacionPago(LocalDateTime.now());
+
+            // Calcular subtotal e IVA (19% Colombia)
+            Double subtotal = totalCalculado / 1.19; // Sacar el IVA incluido
+            Double iva = totalCalculado - subtotal;
+
+            pedido.setSubtotal(subtotal);
+            pedido.setIva(iva);
+            pedido.setCostoEnvio(0.0); // Sin costo de envío por ahora
+            pedido.setTotal(totalCalculado);
+            pedido.setDireccionEnvio(usuario.getDireccion());
+            pedido.setTelefonoContacto(usuario.getTelefono());
+
+            // Guardar pedido en BD
+            Pedido pedidoGuardado = repositorioPedido.guardar(pedido);
+
             // Si llegamos aquí, checkout exitoso - limpiar carrito en BD y memoria
             if (idCarritoPersistido != null) {
                 repositorioItemCarrito.eliminarPorIdCarrito(idCarritoPersistido);
@@ -232,6 +262,8 @@ public class ServicioCarritoCompras {
             }
 
             vaciarCarritoCompleto();
+
+            return pedidoGuardado;
 
         } catch (OptimisticLockException e) {
             throw new ConflictoConcurrenciaException(
