@@ -1,1 +1,0 @@
-find src/main/java -name "*.java" -type f -exec sh -c 'echo "=== {} ===" && cat {}' \;

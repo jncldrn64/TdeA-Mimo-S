@@ -1,6 +1,5 @@
-
 package co.edu.tdea.heladosmimos.web.entidades;
-import co.edu.tdea.heladosmimos.web.entidades.DatosFacturacion;
+
 import lombok.Getter;
 import lombok.Setter;
 
