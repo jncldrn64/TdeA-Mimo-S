@@ -70,6 +70,30 @@ public class ManejadorGlobalExcepciones {
         return construirRespuestaError(ex, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(ProductoDuplicadoException.class)
+    public ResponseEntity<Map<String, Object>> manejarProductoDuplicado(ProductoDuplicadoException ex) {
+        logger.warn("Producto duplicado: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(DatosProductoInvalidosException.class)
+    public ResponseEntity<Map<String, Object>> manejarDatosProductoInvalidos(DatosProductoInvalidosException ex) {
+        logger.warn("Datos de producto inválidos: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(StockNegativoException.class)
+    public ResponseEntity<Map<String, Object>> manejarStockNegativo(StockNegativoException ex) {
+        logger.warn("Stock negativo: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PrecioInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> manejarPrecioInvalido(PrecioInvalidoException ex) {
+        logger.warn("Precio inválido: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(ItemNoEncontradoEnCarritoException.class)
     public ResponseEntity<Map<String, Object>> manejarItemNoEnCarrito(ItemNoEncontradoEnCarritoException ex) {
         logger.warn("Item no encontrado en carrito: {}", ex.getMessage());
