@@ -126,85 +126,75 @@ test_rf03_registro() {
     local CORREO="test_$(date +%s)@heladosmimos.com"
     local CONTRASENA="Test1234"
 
-    # Test 1: Validar correo disponible (paso 1 del registro)
-    log_request "POST" "/registro (paso 1 - validar correo)"
-    RESPONSE=$(curl -s -c $COOKIES -X POST "$BASE_URL/../registro" \
-        -d "correo=$CORREO" \
-        -d "contrasena=$CONTRASENA" \
-        -w "\n%{http_code}" 2>&1)
+    # Test 1: Validar correo disponible
+    log_request "POST" "/api/auth/validar-correo"
+    RESPONSE=$(curl -s -X POST "$BASE_URL/auth/validar-correo" \
+        -d "correo=$CORREO" 2>&1)
 
-    HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-    BODY=$(echo "$RESPONSE" | head -n-1)
-    log_response "$BODY (HTTP $HTTP_CODE)"
+    log_response "$RESPONSE"
 
-    if [ "$HTTP_CODE" = "302" ] || [ "$HTTP_CODE" = "200" ]; then
+    if echo "$RESPONSE" | grep -q '"success":true'; then
         check_result 0 "Validación de correo disponible"
     else
-        check_result 1 "Validación de correo disponible" "HTTP $HTTP_CODE"
+        check_result 1 "Validación de correo disponible"
         return 1
     fi
 
-    # Test 2: Completar registro (paso 2)
-    log_request "POST" "/registro/completar (paso 2 - datos completos)"
-    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST "$BASE_URL/../registro/completar" \
+    # Test 2: Registro completo de usuario
+    log_request "POST" "/api/auth/registrar"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST "$BASE_URL/auth/registrar" \
+        -d "correo=$CORREO" \
+        -d "contrasena=$CONTRASENA" \
         -d "nombre=Usuario" \
         -d "apellido=Prueba" \
         -d "telefono=3001234567" \
         -d "direccion=Calle%20Falsa%20123" \
-        -d "nit=123456789" \
-        -d "confirmarContrasena=$CONTRASENA" \
-        -w "\n%{http_code}" 2>&1)
-
-    HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-    BODY=$(echo "$RESPONSE" | head -n-1)
-    log_response "$BODY (HTTP $HTTP_CODE)"
-
-    if [ "$HTTP_CODE" = "302" ] || [ "$HTTP_CODE" = "200" ]; then
-        check_result 0 "Registro completo de usuario"
-    else
-        check_result 1 "Registro completo de usuario" "HTTP $HTTP_CODE"
-    fi
-
-    # Test 3: Login exitoso
-    log_request "POST" "/login"
-    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST "$BASE_URL/../login" \
-        -d "correo=$CORREO" \
-        -d "contrasena=$CONTRASENA" \
-        -w "\n%{http_code}" 2>&1)
-
-    HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-    BODY=$(echo "$RESPONSE" | head -n-1)
-    log_response "$BODY (HTTP $HTTP_CODE)"
-
-    if [ "$HTTP_CODE" = "302" ] || [ "$HTTP_CODE" = "200" ]; then
-        check_result 0 "Login exitoso con credenciales correctas"
-    else
-        check_result 1 "Login exitoso" "HTTP $HTTP_CODE"
-    fi
-
-    # Test 4: Login fallido (credenciales incorrectas)
-    log_request "POST" "/login (credenciales incorrectas)"
-    RESPONSE=$(curl -s -X POST "$BASE_URL/../login" \
-        -d "correo=$CORREO" \
-        -d "contrasena=PasswordIncorrecto" 2>&1)
+        -d "nit=123456789" 2>&1)
 
     log_response "$RESPONSE"
 
-    if echo "$RESPONSE" | grep -q "Correo o contraseña incorrectos"; then
-        check_result 0 "Login rechazado con credenciales incorrectas"
+    if echo "$RESPONSE" | grep -q '"success":true'; then
+        check_result 0 "Registro completo de usuario"
     else
-        check_result 1 "Login rechazado" "No se detectó mensaje de error"
+        check_result 1 "Registro completo de usuario"
     fi
 
-    # Test 5: Correo duplicado
-    log_request "POST" "/registro (correo duplicado)"
-    RESPONSE=$(curl -s -X POST "$BASE_URL/../registro" \
+    # Test 3: Login exitoso
+    log_request "POST" "/api/auth/login"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST "$BASE_URL/auth/login" \
         -d "correo=$CORREO" \
         -d "contrasena=$CONTRASENA" 2>&1)
 
     log_response "$RESPONSE"
 
-    if echo "$RESPONSE" | grep -q "ya está registrado"; then
+    if echo "$RESPONSE" | grep -q '"success":true'; then
+        check_result 0 "Login exitoso con credenciales correctas"
+    else
+        check_result 1 "Login exitoso"
+    fi
+
+    # Test 4: Login fallido (credenciales incorrectas)
+    log_request "POST" "/api/auth/login (credenciales incorrectas)"
+    RESPONSE=$(curl -s -X POST "$BASE_URL/auth/login" \
+        -d "correo=$CORREO" \
+        -d "contrasena=PasswordIncorrecto" 2>&1)
+
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q 'CredencialesInvalidasException'; then
+        check_result 0 "Login rechazado con credenciales incorrectas"
+    else
+        check_result 1 "Login rechazado" "No se detectó excepción de credenciales"
+    fi
+
+    # Test 5: Correo duplicado
+    log_request "POST" "/api/auth/validar-correo (correo duplicado)"
+    RESPONSE=$(curl -s -X POST "$BASE_URL/auth/validar-correo" \
+        -d "correo=$CORREO" 2>&1)
+
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q 'CorreoYaRegistradoException'; then
         check_result 0 "Rechazo de correo duplicado"
     else
         check_result 1 "Rechazo de correo duplicado" "No se detectó error de duplicado"
@@ -216,10 +206,12 @@ test_rf03_registro() {
 test_rf01_inventario() {
     print_section "RF-01: REGISTRO DE INVENTARIO"
 
+    local TIMESTAMP=$(date +%s)
+
     # Test 6: Registrar producto 1
     log_request "POST" "/api/productos (Producto 1)"
     RESPONSE=$(curl -s -X POST "$BASE_URL/productos" \
-        -d "nombre=Helado Vainilla" \
+        -d "nombre=Helado Vainilla Test $TIMESTAMP" \
         -d "descripcion=Helado artesanal de vainilla" \
         -d "precio=5500" \
         -d "stock=100" 2>&1)
@@ -228,17 +220,17 @@ test_rf01_inventario() {
 
     ID_PRODUCTO_1=$(echo "$RESPONSE" | jq -r '.producto.idProducto' 2>/dev/null)
 
-    if echo "$RESPONSE" | grep -q '"success":true' && [ -n "$ID_PRODUCTO_1" ]; then
+    if echo "$RESPONSE" | grep -q '"success":true' && [ -n "$ID_PRODUCTO_1" ] && [ "$ID_PRODUCTO_1" != "null" ]; then
         check_result 0 "Registro de producto 1 (ID: $ID_PRODUCTO_1)"
     else
-        check_result 1 "Registro de producto 1" "No se obtuvo ID"
+        check_result 1 "Registro de producto 1" "No se obtuvo ID válido"
         return 1
     fi
 
     # Test 7: Registrar producto 2
     log_request "POST" "/api/productos (Producto 2)"
     RESPONSE=$(curl -s -X POST "$BASE_URL/productos" \
-        -d "nombre=Helado Chocolate" \
+        -d "nombre=Helado Chocolate Test $TIMESTAMP" \
         -d "descripcion=Helado artesanal de chocolate belga" \
         -d "precio=6000" \
         -d "stock=50" 2>&1)
@@ -256,7 +248,7 @@ test_rf01_inventario() {
     # Test 8: Registrar producto sin stock
     log_request "POST" "/api/productos (Producto 3 - sin stock)"
     RESPONSE=$(curl -s -X POST "$BASE_URL/productos" \
-        -d "nombre=Helado Fresa" \
+        -d "nombre=Helado Fresa Test $TIMESTAMP" \
         -d "descripcion=Helado de fresa natural" \
         -d "precio=5500" \
         -d "stock=0" 2>&1)
@@ -274,7 +266,7 @@ test_rf01_inventario() {
     # Test 9: Validar nombre duplicado
     log_request "POST" "/api/productos (nombre duplicado)"
     RESPONSE=$(curl -s -X POST "$BASE_URL/productos" \
-        -d "nombre=Helado Vainilla" \
+        -d "nombre=Helado Vainilla Test $TIMESTAMP" \
         -d "precio=5000" \
         -d "stock=10" 2>&1)
 
@@ -289,7 +281,7 @@ test_rf01_inventario() {
     # Test 10: Validar precio inválido
     log_request "POST" "/api/productos (precio inválido)"
     RESPONSE=$(curl -s -X POST "$BASE_URL/productos" \
-        -d "nombre=Helado Test" \
+        -d "nombre=Helado Precio Test $TIMESTAMP" \
         -d "precio=-100" \
         -d "stock=10" 2>&1)
 
@@ -304,7 +296,7 @@ test_rf01_inventario() {
     # Test 11: Validar stock negativo
     log_request "POST" "/api/productos (stock negativo)"
     RESPONSE=$(curl -s -X POST "$BASE_URL/productos" \
-        -d "nombre=Helado Test 2" \
+        -d "nombre=Helado Stock Test $TIMESTAMP" \
         -d "precio=5000" \
         -d "stock=-10" 2>&1)
 
