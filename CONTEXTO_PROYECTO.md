@@ -1,0 +1,886 @@
+# Contexto del Proyecto: Sistema Helados Mimo's
+
+**Última actualización:** 2025-11-10
+**Versión:** 1.0
+**Propósito:** Documento de contexto para Claude Code y otros modelos IA
+
+---
+
+## 🎯 Propósito de este Documento
+
+Este documento existe para que **cualquier instancia de Claude** (u otro modelo) pueda entender rápidamente:
+- Qué se ha implementado y **por qué**
+- Cómo está organizado el código
+- Qué patrones seguir al agregar nueva funcionalidad
+- Dónde están los puntos críticos del sistema
+
+**NO necesitas leer todas las clases** para entender el proyecto. Lee este documento primero.
+
+---
+
+## 📋 Información General
+
+**Proyecto:** Sistema de gestión para Helados Mimo's
+**Stack:** Spring Boot 3.5.7, Java 17, MS SQL Server, JPA/Hibernate
+**Arquitectura:** Hexagonal (Puertos y Adaptadores)
+**Idioma del código:** Español (variables, métodos, clases, todo)
+
+### Objetivos del Proyecto
+
+Implementar 5 requisitos funcionales (RF) principales:
+- **RF-01:** Registro de Inventario ✅ IMPLEMENTADO
+- **RF-03:** Login y Registro de Usuarios ✅ IMPLEMENTADO
+- **RF-05:** Carrito de Compras ✅ IMPLEMENTADO
+- **RF-02:** Por implementar
+- **RF-04:** Por implementar
+
+---
+
+## 🏗️ Arquitectura Hexagonal
+
+### Estructura de Capas (de dentro hacia afuera)
+
+```
+┌─────────────────────────────────────────┐
+│   1. DOMINIO (Entidades)                │  ← Núcleo del negocio
+│      src/main/java/.../dominio/         │
+└─────────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────────┐
+│   2. PUERTOS (Interfaces)               │  ← Contratos
+│      src/main/java/.../puertos/         │
+└─────────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────────┐
+│   3. ADAPTADORES (Implementaciones)     │  ← Infraestructura
+│      src/main/java/.../adaptadores/     │
+└─────────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────────┐
+│   4. SERVICIOS/RF (Lógica de Negocio)   │  ← "Columna vertebral"
+│      web/servicios/requisitos/          │
+│      funcionales/Servicio*.java         │
+└─────────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────────┐
+│   5. CASOS DE USO (Orquestación)        │  ← Coordinadores
+│      web/casosdeuso/CasoDeUso*.java     │
+└─────────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────────┐
+│   6. CONTROLADORES (API/Web)            │  ← Entrada HTTP
+│      web/controladores/                 │
+└─────────────────────────────────────────┘
+```
+
+### ⚠️ REGLA CRÍTICA: Flujo de Dependencias
+
+```
+Controlador → Caso de Uso → Servicio/RF → Adaptador → Puerto → Entidad
+```
+
+**NUNCA:**
+- ❌ Controlador llamando directamente a Repositorio
+- ❌ Controlador llamando directamente a Servicio
+- ❌ Caso de Uso accediendo directamente a Adaptador
+
+**SIEMPRE:**
+- ✅ Controlador → Caso de Uso → Servicio
+- ✅ Servicio → Adaptador (implementación de Puerto)
+
+---
+
+## 📁 Estructura de Directorios
+
+```
+src/main/java/co/edu/tdea/heladosmimos/
+├── dominio/
+│   ├── entidades/
+│   │   ├── Usuario.java
+│   │   ├── Producto.java
+│   │   └── ItemCarrito.java
+│   └── puertos/
+│       ├── RepositorioUsuario.java
+│       ├── RepositorioProducto.java
+│       └── RepositorioCarrito.java
+│
+├── adaptadores/
+│   ├── persistencia/
+│   │   ├── AdaptadorRepositorioUsuario.java
+│   │   ├── AdaptadorRepositorioProducto.java
+│   │   └── AdaptadorRepositorioCarrito.java
+│   └── jpa/
+│       ├── RepositorioUsuarioJPA.java
+│       ├── RepositorioProductoJPA.java
+│       └── RepositorioCarritoJPA.java
+│
+└── web/
+    ├── servicios/
+    │   └── requisitos/
+    │       └── funcionales/
+    │           ├── ServicioAutenticacion.java      ← RF-03
+    │           ├── ServicioRegistro.java           ← RF-03
+    │           ├── ServicioInventario.java         ← RF-01
+    │           └── ServicioCarritoCompras.java     ← RF-05
+    │
+    ├── casosdeuso/
+    │   ├── CasoDeUsoLogin.java
+    │   ├── CasoDeUsoIniciarRegistro.java
+    │   ├── CasoDeUsoRegistrarProducto.java
+    │   ├── CasoDeUsoActualizarProducto.java
+    │   ├── CasoDeUsoGestionarStock.java
+    │   ├── CasoDeUsoConsultarProductos.java
+    │   └── CasoDeUsoAccesoCarrito.java
+    │
+    ├── controladores/
+    │   ├── ControladorAutenticacion.java           ← Vista HTML
+    │   ├── ControladorCarrito.java                 ← Vista HTML
+    │   ├── ControladorCarritoREST.java             ← API REST
+    │   ├── ControladorProductoREST.java            ← API REST
+    │   └── ControladorBienvenida.java              ← Root /
+    │
+    └── excepciones/
+        ├── ProductoNoEncontradoException.java
+        ├── StockInsuficienteException.java
+        ├── ProductoDuplicadoException.java
+        ├── CarritoVacioException.java
+        └── manejadores/
+            └── ManejadorGlobalExcepciones.java     ← @ControllerAdvice
+```
+
+---
+
+## 🔄 Historial de Cambios Importantes
+
+### Cambio 1: Eliminación de Comentarios Excesivos
+**Problema:** Clases con 20-44 líneas de comentarios
+**Solución:** Reducir a máximo 5 líneas por clase
+**Razón:**
+- Código auto-documentado > comentarios
+- Comentarios quedan obsoletos
+- Nombres descriptivos son mejores
+
+**Antes:**
+```java
+/**
+ * Esta clase representa un servicio de carrito de compras
+ * que permite a los usuarios agregar productos al carrito
+ * modificar cantidades, eliminar items...
+ * [38 líneas más]
+ */
+public class ServicioCarritoCompras { }
+```
+
+**Después:**
+```java
+// Gestiona operaciones del carrito: agregar, modificar, eliminar productos
+@Service
+@SessionScope
+public class ServicioCarritoCompras { }
+```
+
+### Cambio 2: Excepciones Personalizadas (SOLID)
+**Problema:** Uso de `RuntimeException` genérica
+**Solución:** 15 excepciones específicas
+**Razón:**
+- Single Responsibility: cada excepción un propósito
+- Mejor trazabilidad de errores
+- Manejo granular en @ControllerAdvice
+
+**Excepciones creadas:**
+
+**RF-05 (Carrito):**
+- `ProductoNoEncontradoException`
+- `ProductoNoDisponibleException`
+- `StockInsuficienteException`
+- `CantidadInvalidaException`
+- `CarritoVacioException`
+- `ItemNoEncontradoEnCarritoException`
+- `SesionInvalidaException`
+- `ErrorPersistenciaException`
+
+**RF-01 (Inventario):**
+- `ProductoDuplicadoException`
+- `DatosProductoInvalidosException`
+- `StockNegativoException`
+- `PrecioInvalidoException`
+
+**Patrón de uso:**
+```java
+// ❌ ANTES (genérico)
+public void agregarProducto(Long id) {
+    throw new RuntimeException("Producto no encontrado");
+}
+
+// ✅ DESPUÉS (específico)
+public void agregarProducto(Long id)
+    throws ProductoNoEncontradoException {
+    throw new ProductoNoEncontradoException("Producto no encontrado: " + id);
+}
+```
+
+### Cambio 3: Manejo Centralizado de Excepciones
+**Problema:** `try-catch` dispersos en controladores
+**Solución:** `@ControllerAdvice` con `ManejadorGlobalExcepciones`
+**Razón:**
+- DRY: no repetir manejo de errores
+- Logging centralizado
+- Respuestas HTTP consistentes
+
+**Ubicación:** `web/excepciones/manejadores/ManejadorGlobalExcepciones.java`
+
+**Antes:**
+```java
+@PostMapping("/agregar")
+public ResponseEntity<?> agregarProducto(...) {
+    try {
+        // lógica
+        return ResponseEntity.ok(respuesta);
+    } catch (Exception e) {  // ❌ Genérico
+        error.put("error", e.getMessage());
+        return ResponseEntity.badRequest().body(error);
+    }
+}
+```
+
+**Después:**
+```java
+// Controlador (limpio)
+@PostMapping("/agregar")
+public ResponseEntity<?> agregarProducto(...)
+    throws ProductoNoEncontradoException, StockInsuficienteException {  // ✅
+    casoDeUso.ejecutar(...);
+    return ResponseEntity.ok(respuesta);
+}
+
+// ManejadorGlobalExcepciones (centralizado)
+@ExceptionHandler(ProductoNoEncontradoException.class)
+public ResponseEntity<Map<String, Object>> manejarProductoNoEncontrado(ProductoNoEncontradoException ex) {
+    logger.warn("Producto no encontrado: {}", ex.getMessage());
+    return construirRespuestaError(ex, HttpStatus.NOT_FOUND);
+}
+```
+
+### Cambio 4: Completar AdaptadorRepositorioProducto
+**Problema:** 5 métodos faltantes (buscarTodos, buscarProductosActivos, etc.)
+**Solución:** Implementar todos los métodos del puerto
+**Razón:**
+- Cumplir contrato de `RepositorioProducto` (puerto)
+- Necesarios para RF-01 (inventario)
+
+### Cambio 5: Anti-patrón en ControladorCarrito
+**Problema:** Campo mutable `private Long idProductoEnEdicion` en singleton
+**Solución:** Usar `HttpSession` para estado por usuario
+**Razón:**
+- Controladores son singletons (1 instancia para todos)
+- Campo compartido entre usuarios = bug de concurrencia
+
+**Antes (❌):**
+```java
+@Controller
+public class ControladorCarrito {
+    private Long idProductoEnEdicion;  // ❌ Compartido entre usuarios
+
+    @PostMapping("/preparar-edicion")
+    public String preparar(@RequestParam Long id) {
+        this.idProductoEnEdicion = id;  // Usuario A sobrescribe Usuario B
+        return "redirect:/carrito";
+    }
+}
+```
+
+**Después (✅):**
+```java
+@Controller
+public class ControladorCarrito {
+    @PostMapping("/preparar-edicion")
+    public String preparar(@RequestParam Long id, HttpSession session) {
+        session.setAttribute("idProductoEnEdicion", id);  // ✅ Por usuario
+        return "redirect:/carrito";
+    }
+}
+```
+
+### Cambio 6: Reorganización Arquitectónica
+**Problema:** Archivos de login/auth dispersos, no seguían patrón de carrito
+**Solución:** Mover a `web/servicios/requisitos/funcionales/`
+
+**Archivos movidos:**
+- `ServicioAutenticacion.java` → `web/servicios/requisitos/funcionales/`
+- `ServicioRegistro.java` → `web/servicios/requisitos/funcionales/`
+- `CasoDeUsoLogin.java` → `web/casosdeuso/`
+- `CasoDeUsoIniciarRegistro.java` → `web/casosdeuso/`
+
+**Razón:** Consistencia arquitectónica - todos los RF siguen el mismo patrón.
+
+### Cambio 7: Implementación RF-01 (Inventario)
+**Componentes creados:**
+
+1. **Servicio (Columna vertebral):**
+   - `ServicioInventario.java` - Lógica de negocio de inventario
+
+2. **Casos de Uso:**
+   - `CasoDeUsoRegistrarProducto.java`
+   - `CasoDeUsoActualizarProducto.java`
+   - `CasoDeUsoGestionarStock.java`
+   - `CasoDeUsoConsultarProductos.java`
+
+3. **Upgrade de Controlador:**
+   - `ControladorProductoREST.java` - Antes usaba repositorio directo (❌), ahora usa casos de uso (✅)
+
+**Validaciones implementadas:**
+- Precio > 0
+- Stock >= 0
+- Nombre único (no duplicados)
+- Datos obligatorios (nombre, precio, stock)
+
+### Cambio 8: Testing Agnóstico
+**Problema:** No había forma de probar backend sin frontend
+**Solución:** REST API + script bash de pruebas
+
+**Archivos creados:**
+- `ControladorCarritoREST.java` - API REST para carrito
+- `ControladorProductoREST.java` - API REST para productos
+- `ControladorBienvenida.java` - Info de endpoints en `/`
+- `test-requisitos-funcionales.sh` - 28 tests automatizados
+
+**⚠️ IMPORTANTE:** Los scripts NO modifican el código backend:
+- ✅ Usan los mismos endpoints REST que usará el frontend HTML/Bootstrap
+- ✅ NO hay backdoors ni endpoints especiales de testing
+- ✅ El código es production-ready
+- ✅ Los tests son 100% agnósticos
+
+**Ejemplo:**
+```bash
+# Script bash:
+curl -X POST '/api/productos?nombre=Helado&precio=5500'
+
+# Frontend HTML hará:
+fetch('/api/productos', {method: 'POST', body: {nombre: 'Helado', precio: 5500}})
+```
+
+Ambos usan `ControladorProductoREST.java:46` - el mismo endpoint.
+
+---
+
+## 📝 Convenciones de Código (OBLIGATORIAS)
+
+### 1. Nombres en Español
+```java
+// ✅ CORRECTO
+public class ServicioCarritoCompras { }
+private Integer cantidadProductos;
+public void agregarProductoAlCarrito(Long idProducto) { }
+
+// ❌ INCORRECTO
+public class ShoppingCartService { }
+private Integer productCount;
+public void addProductToCart(Long productId) { }
+```
+
+### 2. Máximo 2 Niveles de Indentación
+```java
+// ✅ CORRECTO
+public void procesarPedido(Long id) throws PedidoException {
+    Pedido pedido = buscarPedido(id);
+    if (pedido.estaVacio()) {
+        throw new PedidoVacioException("Pedido vacío");
+    }
+    procesarPago(pedido);
+}
+
+// ❌ INCORRECTO
+public void procesarPedido(Long id) {
+    try {
+        Pedido pedido = buscarPedido(id);
+        if (pedido != null) {
+            if (!pedido.estaVacio()) {  // 3er nivel ❌
+                procesarPago(pedido);
+            }
+        }
+    } catch (Exception e) { }
+}
+```
+
+**Técnicas para evitar 3+ niveles:**
+- Early return
+- Extraer métodos privados
+- Usar Optional
+- Usar `throws` en lugar de `try-catch`
+
+### 3. Máximo 5 Líneas de Comentarios por Clase
+```java
+// ✅ CORRECTO
+// Gestiona inventario: registro, actualización, consulta de productos
+@Service
+public class ServicioInventario { }
+
+// ❌ INCORRECTO
+/**
+ * Esta clase es el servicio de inventario que se encarga de...
+ * [10 líneas más]
+ */
+public class ServicioInventario { }
+```
+
+### 4. Excepciones: `throws` > `try-catch`
+```java
+// ✅ CORRECTO
+public void agregarProducto(Long id)
+    throws ProductoNoEncontradoException {
+    Producto p = repo.findById(id)
+        .orElseThrow(() -> new ProductoNoEncontradoException("..."));
+}
+
+// ❌ INCORRECTO
+public void agregarProducto(Long id) {
+    try {
+        Producto p = repo.findById(id).get();
+    } catch (Exception e) {  // Genérico y dificulta trace
+        // ...
+    }
+}
+```
+
+**Razón:**
+- Mejor trazabilidad
+- @ControllerAdvice maneja automáticamente
+- Cumple SOLID (Single Responsibility)
+
+### 5. Logging con SLF4J
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class MiClase {
+    private static final Logger logger = LoggerFactory.getLogger(MiClase.class);
+
+    public void metodo() {
+        logger.info("Iniciando operación X");
+        logger.warn("Advertencia: {}", mensaje);
+        logger.error("Error en operación: {}", e.getMessage(), e);
+    }
+}
+```
+
+### 6. @Transactional en Operaciones de Persistencia
+```java
+@Service
+public class ServicioInventario {
+
+    @Transactional  // ✅ SIEMPRE en writes
+    public Producto registrarProducto(...) {
+        // INSERT/UPDATE/DELETE
+    }
+
+    // @Transactional(readOnly = true)  ← Opcional para reads
+    public List<Producto> listarProductos() {
+        // SELECT
+    }
+}
+```
+
+---
+
+## 🎯 Guía Rápida: Agregar Nuevo Requisito Funcional
+
+Supongamos que quieres agregar **RF-02: Gestión de Pedidos**
+
+### Paso 1: Crear Excepciones Específicas
+```java
+// web/excepciones/PedidoNoEncontradoException.java
+public class PedidoNoEncontradoException extends Exception {
+    public PedidoNoEncontradoException(String mensaje) {
+        super(mensaje);
+    }
+}
+```
+
+Crear 3-5 excepciones específicas del dominio.
+
+### Paso 2: Crear Servicio (Columna Vertebral)
+```java
+// web/servicios/requisitos/funcionales/ServicioPedidos.java
+@Service
+public class ServicioPedidos {
+
+    @Autowired
+    private RepositorioPedido repositorioPedido;
+
+    @Transactional
+    public Pedido crearPedido(Long idUsuario, List<ItemPedido> items)
+        throws UsuarioNoEncontradoException, PedidoVacioException {
+        // Lógica de negocio aquí
+    }
+}
+```
+
+### Paso 3: Crear Casos de Uso
+```java
+// web/casosdeuso/CasoDeUsoCrearPedido.java
+@Service
+public class CasoDeUsoCrearPedido {
+
+    @Autowired
+    private ServicioPedidos servicioPedidos;
+
+    public Pedido ejecutar(Long idUsuario, List<ItemPedido> items)
+        throws UsuarioNoEncontradoException, PedidoVacioException {
+        return servicioPedidos.crearPedido(idUsuario, items);
+    }
+}
+```
+
+Crear 1 caso de uso por operación principal.
+
+### Paso 4: Crear Controlador REST
+```java
+// web/controladores/ControladorPedidoREST.java
+@RestController
+@RequestMapping("/api/pedidos")
+public class ControladorPedidoREST {
+
+    @Autowired
+    private CasoDeUsoCrearPedido casoDeUsoCrearPedido;
+
+    @PostMapping
+    public ResponseEntity<?> crearPedido(@RequestBody PedidoRequest request)
+        throws UsuarioNoEncontradoException, PedidoVacioException {
+        Pedido pedido = casoDeUsoCrearPedido.ejecutar(request.getIdUsuario(), request.getItems());
+        return ResponseEntity.status(HttpStatus.CREATED).body(pedido);
+    }
+}
+```
+
+### Paso 5: Agregar Handlers a ManejadorGlobalExcepciones
+```java
+// web/excepciones/manejadores/ManejadorGlobalExcepciones.java
+@ExceptionHandler(PedidoNoEncontradoException.class)
+public ResponseEntity<Map<String, Object>> manejarPedidoNoEncontrado(PedidoNoEncontradoException ex) {
+    logger.warn("Pedido no encontrado: {}", ex.getMessage());
+    return construirRespuestaError(ex, HttpStatus.NOT_FOUND);
+}
+```
+
+### Paso 6: Actualizar test-requisitos-funcionales.sh
+Agregar función `test_rf02_pedidos()` con tests específicos.
+
+### Paso 7: Commit
+```bash
+git add .
+git commit -m "Nuevo: Implementar RF-02 Gestión de Pedidos siguiendo arquitectura hexagonal"
+git push -u origin claude/nombre-de-tu-branch
+```
+
+---
+
+## 🧪 Testing
+
+### Script Principal: test-requisitos-funcionales.sh
+
+**Ubicación:** `/home/user/TdeA-Mimo-S/test-requisitos-funcionales.sh`
+
+**Cobertura:** 28 tests automatizados
+- RF-03: 5 tests (login/registro)
+- RF-01: 10 tests (inventario)
+- RF-05: 13 tests (carrito)
+
+**Ejecución:**
+```bash
+chmod +x test-requisitos-funcionales.sh
+./test-requisitos-funcionales.sh
+```
+
+**Salida:**
+- Consola: Colorizada (verde ✅, rojo ❌, amarillo ⚠️)
+- Archivo: `./logs/test-rf-YYYY-MM-DD_HH-MM-SS.log`
+
+**Características:**
+- Gestión de sesión HTTP mediante cookies
+- Exit code 0 = éxito, 1 = fallos
+- No modifica el código (100% agnóstico)
+
+### Endpoints REST Disponibles
+
+**Inventario (RF-01):**
+- `GET /api/productos` - Listar activos
+- `GET /api/productos/{id}` - Buscar por ID
+- `POST /api/productos` - Registrar producto
+- `PUT /api/productos/{id}` - Actualizar producto
+- `POST /api/productos/{id}/stock` - Ajustar stock
+- `POST /api/productos/{id}/activar` - Activar producto
+- `POST /api/productos/{id}/desactivar` - Desactivar producto
+
+**Carrito (RF-05):**
+- `GET /api/carrito` - Ver carrito
+- `POST /api/carrito/agregar` - Agregar producto
+- `PUT /api/carrito/actualizar` - Modificar cantidad
+- `DELETE /api/carrito/eliminar` - Eliminar item
+- `DELETE /api/carrito/vaciar` - Vaciar carrito
+
+**Autenticación (RF-03):**
+- `POST /api/auth/validar-correo` - Validar disponibilidad
+- `POST /api/auth/completar-registro` - Registrar usuario
+- `POST /api/auth/login` - Iniciar sesión
+- `POST /api/auth/logout` - Cerrar sesión
+
+**Info:**
+- `GET /` - Lista de endpoints disponibles
+
+---
+
+## 🚨 Problemas Comunes y Soluciones
+
+### Problema 1: "404 Not Found" en Endpoints
+**Causa:** Spring Boot no reiniciado después de `git pull`
+**Solución:**
+```bash
+# Detener aplicación
+# Ejecutar:
+mvn spring-boot:run
+# O reiniciar desde IDE
+```
+
+### Problema 2: Tests de Carrito Fallan (0 items)
+**Causa:** Cada request crea nueva sesión HTTP
+**Solución:** Usar cookies en curl:
+```bash
+COOKIES="/tmp/test-cookies.txt"
+curl -b $COOKIES -c $COOKIES -X POST "$URL/api/carrito/agregar?idProducto=1&cantidad=2"
+curl -b $COOKIES -c $COOKIES -X GET "$URL/api/carrito"  # Usa misma sesión
+```
+
+### Problema 3: "Producto no encontrado" en Tests
+**Causa:** Base de datos vacía
+**Solución:** Insertar productos de prueba:
+```sql
+INSERT INTO productos (nombre, descripcion, precio, stock_disponible, url_imagen, esta_activo)
+VALUES ('Helado Vainilla', 'Helado artesanal', 5500.0, 100, '/img/vainilla.jpg', 1);
+```
+
+O usar endpoint REST:
+```bash
+curl -X POST "http://localhost:8080/api/productos?nombre=Helado+Vainilla&descripcion=Artesanal&precio=5500&stock=100&urlImagen=/img/vainilla.jpg"
+```
+
+### Problema 4: Excepciones No Manejadas
+**Causa:** Falta handler en `ManejadorGlobalExcepciones`
+**Solución:** Agregar `@ExceptionHandler`:
+```java
+@ExceptionHandler(MiNuevaException.class)
+public ResponseEntity<Map<String, Object>> manejarMiNuevaException(MiNuevaException ex) {
+    logger.warn("Error específico: {}", ex.getMessage());
+    return construirRespuestaError(ex, HttpStatus.BAD_REQUEST);
+}
+```
+
+### Problema 5: Anti-patrón Detectado
+**Síntoma:** Controlador inyecta `@Autowired RepositorioX`
+**Solución:** Usar caso de uso:
+```java
+// ❌ ANTES
+@Autowired
+private RepositorioProducto repositorioProducto;
+
+@PostMapping
+public ResponseEntity<?> crear(...) {
+    Producto p = repositorioProducto.save(...);  // Anti-patrón
+}
+
+// ✅ DESPUÉS
+@Autowired
+private CasoDeUsoRegistrarProducto casoDeUso;
+
+@PostMapping
+public ResponseEntity<?> crear(...)
+    throws DatosProductoInvalidosException {
+    Producto p = casoDeUso.ejecutar(...);  // Hexagonal
+}
+```
+
+---
+
+## 🔍 Puntos Críticos del Sistema
+
+### 1. ManejadorGlobalExcepciones.java
+**Ubicación:** `web/excepciones/manejadores/ManejadorGlobalExcepciones.java`
+**Importancia:** CRÍTICA
+**Razón:** Centraliza manejo de TODAS las excepciones del sistema
+
+**Si agregas nueva excepción:** Agregar handler aquí.
+
+### 2. ServicioCarritoCompras.java
+**Anotación:** `@SessionScope`
+**Importancia:** CRÍTICA
+**Razón:** 1 instancia por sesión HTTP (por usuario)
+
+**⚠️ NO cambiar a `@Service`** - perdería estado del carrito por usuario.
+
+### 3. AdaptadorRepositorioProducto.java
+**Patrón:** Implementa `RepositorioProducto` (puerto)
+**Importancia:** ALTA
+**Razón:** Puente entre lógica de negocio y JPA
+
+**Si agregas método en puerto:** Implementar en adaptador.
+
+### 4. ControladorBienvenida.java
+**Endpoint:** `GET /`
+**Importancia:** MEDIA
+**Razón:** Documentación auto-generada de endpoints
+
+**Si agregas controlador REST:** Actualizar lista de endpoints aquí.
+
+---
+
+## 📊 Estado Actual del Proyecto
+
+### Requisitos Funcionales
+
+| RF | Nombre | Estado | Archivos Clave |
+|----|--------|--------|----------------|
+| RF-01 | Inventario | ✅ Completo | `ServicioInventario.java`, `CasoDeUsoRegistrarProducto.java` |
+| RF-02 | (Por definir) | ⏳ Pendiente | - |
+| RF-03 | Login/Registro | ✅ Completo | `ServicioAutenticacion.java`, `ServicioRegistro.java` |
+| RF-04 | (Por definir) | ⏳ Pendiente | - |
+| RF-05 | Carrito | ✅ Completo | `ServicioCarritoCompras.java`, `CasoDeUsoAccesoCarrito.java` |
+
+### Métricas de Código
+
+- **Excepciones personalizadas:** 15
+- **Servicios (RF):** 4
+- **Casos de Uso:** 9
+- **Controladores REST:** 4
+- **Tests automatizados:** 28
+- **Handlers de excepciones:** 15
+
+### Base de Datos
+
+**Tablas principales:**
+- `usuarios` - Credenciales y datos de usuarios
+- `productos` - Catálogo de productos (inventario)
+- `items_carrito` - Items del carrito (relación Usuario-Producto)
+
+---
+
+## 🎓 Recomendaciones para Claude Code
+
+### Al Recibir Nuevo Task
+
+1. **Lee este documento primero** (5 min) antes de leer clases
+2. **Identifica el RF** relacionado con el task
+3. **Busca el Servicio** correspondiente en `web/servicios/requisitos/funcionales/`
+4. **Revisa los Casos de Uso** en `web/casosdeuso/`
+5. **Verifica el Controlador** en `web/controladores/`
+
+### Al Implementar Nueva Funcionalidad
+
+1. ✅ **Crear excepciones específicas** (no usar RuntimeException)
+2. ✅ **Seguir flujo:** Controlador → Caso de Uso → Servicio → Adaptador
+3. ✅ **Agregar @Transactional** en métodos que modifican BD
+4. ✅ **Agregar handlers** en `ManejadorGlobalExcepciones`
+5. ✅ **Usar `throws`** en lugar de `try-catch`
+6. ✅ **Logging con SLF4J** en puntos críticos
+7. ✅ **Máximo 2 niveles** de indentación
+8. ✅ **Máximo 5 líneas** de comentarios
+9. ✅ **Todo en español** (nombres, variables, métodos)
+
+### Al Refactorizar
+
+1. ❌ **NO cambiar `@SessionScope`** en `ServicioCarritoCompras`
+2. ❌ **NO agregar dependencias** sin consultar
+3. ❌ **NO usar inglés** en nombres
+4. ❌ **NO saltarse casos de uso** (acceso directo a servicio)
+5. ✅ **Mantener arquitectura hexagonal**
+6. ✅ **Actualizar tests** si cambias endpoints
+7. ✅ **Commit con mensaje descriptivo** en español
+
+### Al Debuggear
+
+1. **Revisar logs:** `./logs/test-rf-*.log`
+2. **Ejecutar tests:** `./test-requisitos-funcionales.sh`
+3. **Verificar handlers:** `ManejadorGlobalExcepciones.java`
+4. **Comprobar sesión HTTP:** Usar cookies en curl
+5. **Validar datos:** Revisar excepciones específicas lanzadas
+
+---
+
+## 📚 Recursos Adicionales
+
+### Commits Importantes
+
+- `fb65456` - Script completo de pruebas para todos los RF
+- `e531506` - Implementar RF-01 Registro de Inventario
+- `a881c4d` - Manejo centralizado de excepciones (SOLID)
+- `291b5eb` - Reorganizar Login y Carrito según arquitectura hexagonal
+
+### Archivos de Configuración
+
+- `application.properties` - Configuración Spring Boot
+- `pom.xml` - Dependencias Maven
+
+### Scripts Útiles
+
+- `test-requisitos-funcionales.sh` - Tests automatizados
+- `test-carrito.sh` - Tests específicos de carrito (deprecado, usar el anterior)
+
+---
+
+## ✅ Checklist: Antes de Commit
+
+- [ ] Código en español (variables, métodos, clases)
+- [ ] Máximo 2 niveles de indentación
+- [ ] Máximo 5 líneas de comentarios por clase
+- [ ] Excepciones específicas (no RuntimeException genérico)
+- [ ] `@Transactional` en métodos de escritura
+- [ ] Handlers agregados a `ManejadorGlobalExcepciones`
+- [ ] Logging con SLF4J en puntos críticos
+- [ ] Tests actualizados (si aplica)
+- [ ] Arquitectura hexagonal respetada
+- [ ] Mensaje de commit descriptivo en español
+
+---
+
+## 🤝 Flujo de Trabajo Git
+
+```bash
+# 1. Crear/usar branch con prefijo 'claude/'
+git checkout -b claude/nombre-feature-sessionId
+
+# 2. Hacer cambios
+
+# 3. Commit descriptivo
+git add .
+git commit -m "Nuevo: Descripción clara del cambio siguiendo convenciones"
+
+# 4. Push a origin
+git push -u origin claude/nombre-feature-sessionId
+
+# 5. Usuario hace merge a main vía PR
+```
+
+**Prefijos de commit:**
+- `Nuevo:` - Nueva funcionalidad
+- `Fix:` - Corrección de bug
+- `Refactor:` - Reorganización sin cambiar funcionalidad
+- `Docs:` - Documentación
+
+---
+
+## 🎯 TL;DR - Información Esencial
+
+**Si solo puedes leer 1 minuto:**
+
+1. **Arquitectura:** Hexagonal - Controlador → Caso de Uso → Servicio → Adaptador → Puerto → Entidad
+2. **Servicios (RF):** `web/servicios/requisitos/funcionales/Servicio*.java` ← Columna vertebral
+3. **Excepciones:** Específicas + `@ControllerAdvice` en `ManejadorGlobalExcepciones.java`
+4. **Convenciones:** Español, max 2 indentaciones, max 5 líneas de comentarios, `throws` > `try-catch`
+5. **Testing:** `./test-requisitos-funcionales.sh` - 28 tests, 100% agnóstico
+6. **RF Implementados:** RF-01 (Inventario), RF-03 (Login), RF-05 (Carrito)
+
+**Archivo más importante:** `ManejadorGlobalExcepciones.java` - maneja TODAS las excepciones.
+
+---
+
+**Fin del documento de contexto**
+
+Este documento se actualiza con cada cambio arquitectónico importante.
