@@ -225,7 +225,12 @@ public class ServicioCarritoCompras {
                 repositorioProducto.guardar(producto);
             }
 
-            // Si llegamos aquí, checkout exitoso - vaciar carrito
+            // Si llegamos aquí, checkout exitoso - limpiar carrito en BD y memoria
+            if (idCarritoPersistido != null) {
+                repositorioItemCarrito.eliminarPorIdCarrito(idCarritoPersistido);
+                idCarritoPersistido = null;
+            }
+
             vaciarCarritoCompleto();
 
         } catch (OptimisticLockException e) {

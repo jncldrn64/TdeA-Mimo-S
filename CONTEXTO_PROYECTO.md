@@ -90,6 +90,99 @@ Controlador → Caso de Uso → Servicio/RF → Adaptador → Puerto → Entidad
 
 ---
 
+## 🎨 Estrategia Híbrida: Thymeleaf + AJAX + Bootstrap
+
+### Enfoque Dual: Server-side + Client-side
+
+El sistema implementa **DOS controladores para cada funcionalidad**:
+
+1. **Controladores HTML** (`@Controller`) - Server-side rendering con Thymeleaf
+2. **Controladores REST** (`@RestController`) - Endpoints AJAX/JSON
+
+**Ambos comparten los mismos Casos de Uso** - Arquitectura limpia respetada.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CONTROLADORES                            │
+├──────────────────────────────┬──────────────────────────────┤
+│  ControladorAutenticacion    │  ControladorAutenticacionREST│
+│  ControladorCatalogo         │  ControladorProductoREST     │
+│  ControladorCarrito          │  ControladorCarritoREST      │
+├──────────────────────────────┴──────────────────────────────┤
+│              COMPARTEN LOS MISMOS CASOS DE USO              │
+│  CasoDeUsoLogin, CasoDeUsoAccesoCarrito, etc.              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### ¿Cuándo Usar Cada Enfoque?
+
+| Operación | Enfoque | Controlador | Razón |
+|-----------|---------|-------------|-------|
+| **Mostrar login** | Server-side | `ControladorAutenticacion.java` | Página completa, SEO |
+| **Procesar login** | Server-side | `ControladorAutenticacion.java` | Redirección simple |
+| **Mostrar catálogo** | Server-side | `ControladorCatalogo.java` | Productos desde BD |
+| **Agregar al carrito** | Híbrido | Ambos disponibles | Form o AJAX |
+| **Ver carrito** | Server-side | `ControladorCarrito.java` | Página completa |
+| **Modificar cantidad** | AJAX | `ControladorCarritoREST.java` | Mejor UX |
+| **Checkout** | AJAX | `ControladorCarritoREST.java` | Errores dinámicos |
+
+### Ventajas del Enfoque Híbrido
+
+✅ **Funciona sin JavaScript** - Formularios tradicionales
+✅ **Mejor UX con JavaScript** - Sin recargas de página
+✅ **APIs REST ya testeadas** - 37 tests pasando
+✅ **SEO friendly** - Server-side rendering
+✅ **Accesibilidad** - Funciona con lectores de pantalla
+✅ **Flexibilidad** - Frontend elige enfoque por operación
+
+### Integración con Bootstrap
+
+**Bootstrap CSS** → Estilos visuales (grid, componentes)
+**Thymeleaf** → Inyecta datos del backend
+**JavaScript (opcional)** → Mejora UX con APIs REST
+
+**Archivos estáticos (layouts de Layoutit Studio):**
+```
+src/main/resources/
+├── templates/           ← HTML con Thymeleaf + Bootstrap
+│   ├── login.html
+│   ├── catalogo.html
+│   └── carrito.html
+│
+└── static/              ← CSS/JS/imágenes custom
+    ├── css/custom.css
+    ├── js/app.js
+    └── img/
+```
+
+### Guía para Integrar HTML de Layoutit Studio
+
+1. **Diseñar en Layoutit Studio** → Copiar HTML
+2. **Pegar en `templates/nombre.html`**
+3. **Agregar namespace:**
+   ```html
+   <html xmlns:th="http://www.thymeleaf.org">
+   ```
+4. **Reemplazar datos estáticos:**
+   ```html
+   <!-- ❌ Estático -->
+   <h5>Helado de Vainilla</h5>
+
+   <!-- ✅ Dinámico -->
+   <h5 th:text="${producto.nombreProducto}">Helado</h5>
+   ```
+5. **Conectar formularios:**
+   ```html
+   <form th:action="@{/login}" method="POST">
+   ```
+6. **Agregar JavaScript (opcional):**
+   ```javascript
+   // Llamada AJAX a API REST
+   fetch('/api/carrito/agregar', {method: 'POST'})
+   ```
+
+---
+
 ## 📁 Estructura de Directorios
 
 ```
@@ -360,6 +453,47 @@ fetch('/api/productos', {method: 'POST', body: {nombre: 'Helado', precio: 5500}}
 ```
 
 Ambos usan `ControladorProductoREST.java:46` - el mismo endpoint.
+
+### Cambio 9: Estrategia Híbrida Thymeleaf + AJAX
+**Problema:** Confusión sobre si usar server-side (Thymeleaf) o client-side (SPA puro)
+**Solución:** Enfoque híbrido con doble controlador
+
+**Decisión arquitectónica:**
+- **Controladores HTML** (`@Controller`) para server-side rendering
+- **Controladores REST** (`@RestController`) para operaciones AJAX
+- **Ambos comparten los mismos Casos de Uso** - arquitectura limpia
+
+**Archivos creados:**
+- `ControladorCatalogo.java` - Vista de catálogo con Thymeleaf
+
+**Ventajas:**
+- ✅ Funciona sin JavaScript (formularios tradicionales)
+- ✅ Mejor UX con JavaScript opcional (AJAX)
+- ✅ APIs REST ya testeadas (37 tests)
+- ✅ Flexibilidad para elegir enfoque por operación
+
+**Integración con Bootstrap:**
+- HTML diseñado en Layoutit Studio
+- Bootstrap CSS para estilos
+- Thymeleaf para datos dinámicos
+- JavaScript opcional para interacciones AJAX
+
+### Cambio 10: Corrección Bug Carrito en BD al Checkout
+**Problema:** Al hacer checkout, carrito se vaciaba solo en memoria pero no en BD
+**Impacto:** Si usuario cerraba sesión y volvía, carrito anterior reaparecía
+
+**Solución:** `ServicioCarritoCompras.java:228-232`
+```java
+// Si llegamos aquí, checkout exitoso - limpiar carrito en BD y memoria
+if (idCarritoPersistido != null) {
+    repositorioItemCarrito.eliminarPorIdCarrito(idCarritoPersistido);
+    idCarritoPersistido = null;
+}
+
+vaciarCarritoCompleto();
+```
+
+**Resultado:** Checkout ahora limpia ambos: memoria (@SessionScope) y base de datos.
 
 ---
 
@@ -970,13 +1104,15 @@ curl -b cookies_b.txt -c cookies_b.txt -X POST http://localhost:8080/api/carrito
 
 ### Métricas de Código
 
-- **Excepciones personalizadas:** 16 (+ ConflictoConcurrenciaException)
+- **Excepciones personalizadas:** 17 (incluye ConflictoConcurrenciaException)
 - **Servicios (RF):** 4
 - **Casos de Uso:** 9
-- **Controladores REST:** 5 (incluye ControladorAutenticacionREST)
+- **Controladores HTML:** 3 (Autenticación, Catálogo, Carrito)
+- **Controladores REST:** 4 (Autenticación, Producto, Carrito, Bienvenida)
 - **Tests automatizados:** 37 (RF-03: 5, RF-01: 10, RF-05: 22)
-- **Handlers de excepciones:** 16 (+ conflicto de concurrencia)
+- **Handlers de excepciones:** 16
 - **Protección contra race conditions:** ✅ Implementada (Optimistic Locking)
+- **Estrategia de vistas:** ✅ Híbrida (Thymeleaf + AJAX)
 
 ### Base de Datos
 
