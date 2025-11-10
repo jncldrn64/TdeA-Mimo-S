@@ -19,23 +19,35 @@ public class ControladorBienvenida {
         info.put("version", "1.0.0");
         info.put("status", "running");
 
-        Map<String, String> endpoints = new HashMap<>();
-        endpoints.put("productos", "GET /api/productos");
-        endpoints.put("productosActivos", "GET /api/productos/activos");
-        endpoints.put("crearProductoPrueba", "POST /api/productos/crear-prueba");
-        endpoints.put("carrito", "GET /api/carrito");
-        endpoints.put("agregarAlCarrito", "POST /api/carrito/agregar?idProducto={id}&cantidad={n}");
-        endpoints.put("modificarCantidad", "POST /api/carrito/modificar?idProducto={id}&nuevaCantidad={n}");
-        endpoints.put("eliminarDelCarrito", "DELETE /api/carrito/eliminar/{id}");
-        endpoints.put("vaciarCarrito", "DELETE /api/carrito/vaciar");
+        Map<String, String> endpointsInventario = new HashMap<>();
+        endpointsInventario.put("listar", "GET /api/productos");
+        endpointsInventario.put("listarActivos", "GET /api/productos/activos");
+        endpointsInventario.put("obtenerPorId", "GET /api/productos/{id}");
+        endpointsInventario.put("registrar", "POST /api/productos");
+        endpointsInventario.put("actualizar", "PUT /api/productos/{id}");
+        endpointsInventario.put("actualizarStock", "PATCH /api/productos/{id}/stock");
+        endpointsInventario.put("activar", "PATCH /api/productos/{id}/activar");
+        endpointsInventario.put("desactivar", "PATCH /api/productos/{id}/desactivar");
+
+        Map<String, String> endpointsCarrito = new HashMap<>();
+        endpointsCarrito.put("ver", "GET /api/carrito");
+        endpointsCarrito.put("agregar", "POST /api/carrito/agregar?idProducto={id}&cantidad={n}");
+        endpointsCarrito.put("modificar", "POST /api/carrito/modificar?idProducto={id}&nuevaCantidad={n}");
+        endpointsCarrito.put("eliminar", "DELETE /api/carrito/eliminar/{id}");
+        endpointsCarrito.put("vaciar", "DELETE /api/carrito/vaciar");
+
+        Map<String, Object> endpoints = new HashMap<>();
+        endpoints.put("inventario", endpointsInventario);
+        endpoints.put("carrito", endpointsCarrito);
 
         info.put("endpoints", endpoints);
 
         Map<String, String> ejemplos = new HashMap<>();
-        ejemplos.put("1_crear_producto", "curl -X POST 'http://localhost:8080/api/productos/crear-prueba?nombre=Helado&precio=5000&stock=50'");
+        ejemplos.put("1_registrar_producto", "curl -X POST 'http://localhost:8080/api/productos?nombre=Helado%20Vainilla&precio=5500&stock=100&descripcion=Delicioso'");
         ejemplos.put("2_listar_productos", "curl http://localhost:8080/api/productos");
-        ejemplos.put("3_agregar_al_carrito", "curl -X POST 'http://localhost:8080/api/carrito/agregar?idProducto=1&cantidad=2'");
-        ejemplos.put("4_ver_carrito", "curl http://localhost:8080/api/carrito");
+        ejemplos.put("3_actualizar_stock", "curl -X PATCH 'http://localhost:8080/api/productos/1/stock?stock=200'");
+        ejemplos.put("4_agregar_al_carrito", "curl -X POST 'http://localhost:8080/api/carrito/agregar?idProducto=1&cantidad=2'");
+        ejemplos.put("5_ver_carrito", "curl http://localhost:8080/api/carrito");
 
         info.put("ejemplos", ejemplos);
 
