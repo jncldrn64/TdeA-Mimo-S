@@ -4,8 +4,11 @@ import co.edu.tdea.heladosmimos.web.entidades.ItemCarrito;
 import co.edu.tdea.heladosmimos.web.entidades.Producto;
 import co.edu.tdea.heladosmimos.web.puertos.RepositorioProducto;
 import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoAccesoCarrito;
+import co.edu.tdea.heladosmimos.web.excepciones.*;
 import co.edu.tdea.heladosmimos.web.servicios.requisitos.funcionales.ServicioCarritoCompras;
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,6 +26,8 @@ import java.util.Map;
 @Controller
 @RequestMapping("/carrito")
 public class ControladorCarrito {
+
+    private static final Logger logger = LoggerFactory.getLogger(ControladorCarrito.class);
 
     @Autowired
     private CasoDeUsoAccesoCarrito casoDeUsoAccesoCarrito;
@@ -48,6 +53,7 @@ public class ControladorCarrito {
 
             return "carrito";
         } catch (Exception e) {
+            logger.error("Error al mostrar carrito: {}", e.getMessage(), e);
             model.addAttribute("error", e.getMessage());
             return "carrito";
         }
@@ -60,7 +66,9 @@ public class ControladorCarrito {
         try {
             casoDeUsoAccesoCarrito.ejecutarAgregarProducto(idProducto, cantidad);
             return "redirect:/carrito";
-        } catch (Exception e) {
+        } catch (ProductoNoEncontradoException | ProductoNoDisponibleException |
+                 StockInsuficienteException | CantidadInvalidaException e) {
+            logger.warn("Error al agregar producto {}: {}", idProducto, e.getMessage());
             model.addAttribute("error", e.getMessage());
             return "redirect:/catalogo?error=" + e.getMessage();
         }
@@ -81,7 +89,9 @@ public class ControladorCarrito {
             casoDeUsoAccesoCarrito.ejecutarModificarCantidad(idProducto, nuevaCantidad);
             session.removeAttribute("idProductoEnEdicion");
             return "redirect:/carrito";
-        } catch (Exception e) {
+        } catch (ProductoNoEncontradoException | StockInsuficienteException |
+                 CantidadInvalidaException e) {
+            logger.warn("Error al editar cantidad producto {}: {}", idProducto, e.getMessage());
             model.addAttribute("error", e.getMessage());
             return "redirect:/carrito?error=" + e.getMessage();
         }
@@ -92,19 +102,17 @@ public class ControladorCarrito {
         try {
             casoDeUsoAccesoCarrito.ejecutarEliminarProducto(idProducto);
             return "redirect:/carrito";
-        } catch (Exception e) {
+        } catch (ProductoNoEncontradoException e) {
+            logger.warn("Error al eliminar producto {}: {}", idProducto, e.getMessage());
             return "redirect:/carrito?error=" + e.getMessage();
         }
     }
 
     @PostMapping("/vaciar")
     public String vaciarCarrito() {
-        try {
-            casoDeUsoAccesoCarrito.ejecutarVaciarCarrito();
-            return "redirect:/carrito";
-        } catch (Exception e) {
-            return "redirect:/carrito?error=" + e.getMessage();
-        }
+        logger.info("Vaciando carrito");
+        casoDeUsoAccesoCarrito.ejecutarVaciarCarrito();
+        return "redirect:/carrito";
     }
 
     private List<Map<String, Object>> enriquecerItemsConProductos(List<ItemCarrito> items) {
