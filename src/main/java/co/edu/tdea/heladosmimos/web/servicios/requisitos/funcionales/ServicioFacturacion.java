@@ -73,7 +73,10 @@ public class ServicioFacturacion {
             throw new ProductoNoEncontradoException(
                 "No existe usuario con ID: " + pedido.getIdUsuario());
         }
-        
+
+        // Validar datos de facturación completos
+        validarDatosFacturacion(datosFacturacion, usuario);
+
         // Crear factura
         Factura factura = new Factura();
         factura.setIdPedido(idPedido);
@@ -146,7 +149,46 @@ public class ServicioFacturacion {
             "Colombia",
             datos.getCodigoPostal());
     }
-    
+
+    /**
+     * Valida que los datos de facturación estén completos.
+     * Si falta algún campo requerido, lanza DatosFacturacionInvalidosException.
+     */
+    private void validarDatosFacturacion(DatosFacturacion datos, Usuario usuario)
+            throws DatosFacturacionInvalidosException {
+
+        // Validar NIT (puede venir de formulario o de usuario)
+        String nit = datos.getNit() != null ? datos.getNit() : usuario.getNit();
+        if (nit == null || nit.trim().isEmpty()) {
+            throw new DatosFacturacionInvalidosException("El NIT es obligatorio");
+        }
+
+        // Validar razón social
+        if (datos.getRazonSocial() == null || datos.getRazonSocial().trim().isEmpty()) {
+            throw new DatosFacturacionInvalidosException("La razón social es obligatoria");
+        }
+
+        // Validar dirección
+        if (datos.getDireccionCalle() == null || datos.getDireccionCalle().trim().isEmpty()) {
+            throw new DatosFacturacionInvalidosException("La dirección es obligatoria");
+        }
+
+        // Validar ciudad
+        if (datos.getCiudad() == null || datos.getCiudad().trim().isEmpty()) {
+            throw new DatosFacturacionInvalidosException("La ciudad es obligatoria");
+        }
+
+        // Validar estado/departamento
+        if (datos.getEstado() == null || datos.getEstado().trim().isEmpty()) {
+            throw new DatosFacturacionInvalidosException("El estado/departamento es obligatorio");
+        }
+
+        // Validar código postal
+        if (datos.getCodigoPostal() == null || datos.getCodigoPostal().trim().isEmpty()) {
+            throw new DatosFacturacionInvalidosException("El código postal es obligatorio");
+        }
+    }
+
     /**
      * Obtiene factura por ID de pedido.
      */
