@@ -31,12 +31,17 @@ public class ControladorCarritoREST {
         List<ItemCarrito> items = casoDeUsoAccesoCarrito.ejecutarObtenerCarrito();
         Double total = casoDeUsoAccesoCarrito.ejecutarObtenerTotal();
         Integer cantidadItems = servicioCarritoCompras.contarTotalDeProductos();
+        List<String> advertencias = servicioCarritoCompras.validarDisponibilidadItems();
 
         Map<String, Object> respuesta = new HashMap<>();
         respuesta.put("items", items);
         respuesta.put("total", total);
         respuesta.put("cantidadItems", cantidadItems);
         respuesta.put("success", true);
+
+        if (!advertencias.isEmpty()) {
+            respuesta.put("advertencias", advertencias);
+        }
 
         return ResponseEntity.ok(respuesta);
     }
@@ -95,6 +100,21 @@ public class ControladorCarritoREST {
         Map<String, Object> respuesta = new HashMap<>();
         respuesta.put("success", true);
         respuesta.put("mensaje", "Carrito vaciado correctamente");
+
+        return ResponseEntity.ok(respuesta);
+    }
+
+    @PostMapping("/checkout")
+    public ResponseEntity<?> procesarCheckout()
+            throws CarritoVacioException, StockInsuficienteException,
+                   ProductoNoEncontradoException, ProductoNoDisponibleException,
+                   ConflictoConcurrenciaException {
+
+        servicioCarritoCompras.procesarCheckout();
+
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("success", true);
+        respuesta.put("mensaje", "Checkout procesado exitosamente. Stock actualizado y carrito vaciado.");
 
         return ResponseEntity.ok(respuesta);
     }

@@ -30,4 +30,7 @@ public class Producto {
     private LocalDateTime fechaUltimoRestock;
     @Column(name = "esta_activo")
     private Boolean estaActivo;
+
+    @Version
+    private Long version;
 }

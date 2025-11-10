@@ -4,9 +4,12 @@ import co.edu.tdea.heladosmimos.web.entidades.Carrito;
 import co.edu.tdea.heladosmimos.web.entidades.ItemCarrito;
 import co.edu.tdea.heladosmimos.web.entidades.Producto;
 import co.edu.tdea.heladosmimos.web.excepciones.CantidadInvalidaException;
+import co.edu.tdea.heladosmimos.web.excepciones.CarritoVacioException;
+import co.edu.tdea.heladosmimos.web.excepciones.ConflictoConcurrenciaException;
 import co.edu.tdea.heladosmimos.web.excepciones.ProductoNoDisponibleException;
 import co.edu.tdea.heladosmimos.web.excepciones.ProductoNoEncontradoException;
 import co.edu.tdea.heladosmimos.web.excepciones.StockInsuficienteException;
+import jakarta.persistence.OptimisticLockException;
 import co.edu.tdea.heladosmimos.web.puertos.RepositorioCarrito;
 import co.edu.tdea.heladosmimos.web.puertos.RepositorioItemCarrito;
 import co.edu.tdea.heladosmimos.web.puertos.RepositorioProducto;
@@ -186,6 +189,76 @@ public class ServicioCarritoCompras {
         }
 
         idCarritoPersistido = null;
+    }
+
+    @Transactional
+    public void procesarCheckout()
+            throws CarritoVacioException, StockInsuficienteException,
+                   ProductoNoEncontradoException, ProductoNoDisponibleException,
+                   ConflictoConcurrenciaException {
+
+        if (itemsDelCarrito.isEmpty()) {
+            throw new CarritoVacioException("El carrito está vacío");
+        }
+
+        try {
+            // Validar disponibilidad y reducir stock ATÓMICAMENTE
+            for (ItemCarrito item : itemsDelCarrito) {
+                Producto producto = repositorioProducto.buscarPorId(item.getIdProducto())
+                    .orElseThrow(() -> new ProductoNoEncontradoException(
+                        "Producto no encontrado: " + item.getIdProducto()));
+
+                if (!producto.getEstaActivo()) {
+                    throw new ProductoNoDisponibleException(
+                        "Producto no disponible: " + producto.getNombreProducto());
+                }
+
+                if (producto.getStockDisponible() < item.getCantidad()) {
+                    throw new StockInsuficienteException(
+                        "Stock insuficiente para " + producto.getNombreProducto() +
+                        ". Disponible: " + producto.getStockDisponible() +
+                        ", solicitado: " + item.getCantidad());
+                }
+
+                // Reducir stock (si otro usuario modificó, OptimisticLockException)
+                producto.setStockDisponible(producto.getStockDisponible() - item.getCantidad());
+                repositorioProducto.guardar(producto);
+            }
+
+            // Si llegamos aquí, checkout exitoso - vaciar carrito
+            vaciarCarritoCompleto();
+
+        } catch (OptimisticLockException e) {
+            throw new ConflictoConcurrenciaException(
+                "Otro usuario modificó el stock al mismo tiempo. " +
+                "Por favor, revisa tu carrito e intenta nuevamente.");
+        }
+    }
+
+    public List<String> validarDisponibilidadItems() {
+        List<String> advertencias = new ArrayList<>();
+
+        for (ItemCarrito item : itemsDelCarrito) {
+            Producto producto = repositorioProducto.buscarPorId(item.getIdProducto())
+                .orElse(null);
+
+            if (producto == null) {
+                advertencias.add("Producto con ID " + item.getIdProducto() + " ya no existe");
+                continue;
+            }
+
+            if (!producto.getEstaActivo()) {
+                advertencias.add(producto.getNombreProducto() + " ya no está disponible");
+            }
+
+            if (producto.getStockDisponible() < item.getCantidad()) {
+                advertencias.add(producto.getNombreProducto() +
+                    ": solo quedan " + producto.getStockDisponible() +
+                    " unidades (tienes " + item.getCantidad() + " en carrito)");
+            }
+        }
+
+        return advertencias;
     }
 
     private ItemCarrito buscarItemPorProducto(Long idProducto) {
