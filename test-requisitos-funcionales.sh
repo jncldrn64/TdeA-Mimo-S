@@ -83,6 +83,61 @@ log_error() {
     echo "[ERROR] $1" >> "$LOG_FILE"
 }
 
+# Extrae ID del JSON con fallback si jq falla
+extraer_id_producto() {
+    local json="$1"
+    local id=""
+
+    # Intentar con jq primero
+    if command -v jq &> /dev/null; then
+        id=$(echo "$json" | jq -r '.producto.idProducto' 2>/dev/null)
+    fi
+
+    # Fallback: usar grep + sed si jq falla o no está disponible
+    if [ -z "$id" ] || [ "$id" = "null" ]; then
+        id=$(echo "$json" | grep -o '"idProducto":[0-9]*' | grep -o '[0-9]*' | head -n1)
+    fi
+
+    echo "$id"
+}
+
+# Extrae valor numérico del JSON con fallback
+extraer_valor() {
+    local json="$1"
+    local campo="$2"
+    local valor=""
+
+    # Intentar con jq primero
+    if command -v jq &> /dev/null; then
+        valor=$(echo "$json" | jq -r ".$campo" 2>/dev/null)
+    fi
+
+    # Fallback: usar grep + sed
+    if [ -z "$valor" ] || [ "$valor" = "null" ]; then
+        valor=$(echo "$json" | grep -o "\"$campo\":[0-9]*" | grep -o '[0-9]*' | head -n1)
+    fi
+
+    echo "$valor"
+}
+
+# Cuenta elementos en un array JSON
+contar_elementos() {
+    local json="$1"
+    local count=""
+
+    # Intentar con jq primero
+    if command -v jq &> /dev/null; then
+        count=$(echo "$json" | jq 'length' 2>/dev/null)
+    fi
+
+    # Fallback: contar ocurrencias de "idProducto"
+    if [ -z "$count" ] || [ "$count" = "null" ]; then
+        count=$(echo "$json" | grep -o '"idProducto":' | wc -l)
+    fi
+
+    echo "$count"
+}
+
 check_result() {
     TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -218,13 +273,13 @@ test_rf01_inventario() {
 
     log_response "$RESPONSE"
 
-    ID_PRODUCTO_1=$(echo "$RESPONSE" | jq -r '.producto.idProducto' 2>/dev/null)
+    ID_PRODUCTO_1=$(extraer_id_producto "$RESPONSE")
 
-    if echo "$RESPONSE" | grep -q '"success":true' && [ -n "$ID_PRODUCTO_1" ] && [ "$ID_PRODUCTO_1" != "null" ]; then
+    if echo "$RESPONSE" | grep -q '"success":true' && [ -n "$ID_PRODUCTO_1" ]; then
         check_result 0 "Registro de producto 1 (ID: $ID_PRODUCTO_1)"
     else
-        check_result 1 "Registro de producto 1" "No se obtuvo ID válido"
-        return 1
+        check_result 1 "Registro de producto 1" "No se obtuvo ID válido: '$ID_PRODUCTO_1'"
+        # No hacer return - continuar con tests para diagnóstico completo
     fi
 
     # Test 7: Registrar producto 2
@@ -237,12 +292,12 @@ test_rf01_inventario() {
 
     log_response "$RESPONSE"
 
-    ID_PRODUCTO_2=$(echo "$RESPONSE" | jq -r '.producto.idProducto' 2>/dev/null)
+    ID_PRODUCTO_2=$(extraer_id_producto "$RESPONSE")
 
-    if echo "$RESPONSE" | grep -q '"success":true'; then
+    if echo "$RESPONSE" | grep -q '"success":true' && [ -n "$ID_PRODUCTO_2" ]; then
         check_result 0 "Registro de producto 2 (ID: $ID_PRODUCTO_2)"
     else
-        check_result 1 "Registro de producto 2"
+        check_result 1 "Registro de producto 2" "No se obtuvo ID válido: '$ID_PRODUCTO_2'"
     fi
 
     # Test 8: Registrar producto sin stock
@@ -255,12 +310,12 @@ test_rf01_inventario() {
 
     log_response "$RESPONSE"
 
-    ID_PRODUCTO_3=$(echo "$RESPONSE" | jq -r '.producto.idProducto' 2>/dev/null)
+    ID_PRODUCTO_3=$(extraer_id_producto "$RESPONSE")
 
-    if echo "$RESPONSE" | grep -q '"success":true'; then
+    if echo "$RESPONSE" | grep -q '"success":true' && [ -n "$ID_PRODUCTO_3" ]; then
         check_result 0 "Registro de producto 3 sin stock (ID: $ID_PRODUCTO_3)"
     else
-        check_result 1 "Registro de producto 3"
+        check_result 1 "Registro de producto 3" "No se obtuvo ID válido: '$ID_PRODUCTO_3'"
     fi
 
     # Test 9: Validar nombre duplicado
@@ -313,12 +368,12 @@ test_rf01_inventario() {
     RESPONSE=$(curl -s "$BASE_URL/productos" 2>&1)
     log_response "$RESPONSE"
 
-    CANTIDAD=$(echo "$RESPONSE" | jq 'length' 2>/dev/null)
+    CANTIDAD=$(contar_elementos "$RESPONSE")
 
-    if [ "$CANTIDAD" -ge 3 ]; then
+    if [ -n "$CANTIDAD" ] && [ "$CANTIDAD" -ge 3 ]; then
         check_result 0 "Listar todos los productos ($CANTIDAD encontrados)"
     else
-        check_result 1 "Listar productos" "Se esperaban al menos 3"
+        check_result 1 "Listar productos" "Se esperaban al menos 3, encontrados: '$CANTIDAD'"
     fi
 
     # Test 13: Actualizar stock (restock)
@@ -360,17 +415,23 @@ test_rf01_inventario() {
 test_rf05_carrito() {
     print_section "RF-05: CARRITO DE COMPRAS"
 
+    # Validar que hay productos para probar el carrito
+    if [ -z "$ID_PRODUCTO_1" ] || [ -z "$ID_PRODUCTO_2" ]; then
+        echo -e "${YELLOW}⚠ ADVERTENCIA: No hay productos registrados, algunos tests de carrito fallarán${NC}"
+        log_error "ADVERTENCIA: Tests de carrito requieren productos (ID_PRODUCTO_1='$ID_PRODUCTO_1', ID_PRODUCTO_2='$ID_PRODUCTO_2')"
+    fi
+
     # Test 16: Ver carrito vacío
     log_request "GET" "/api/carrito (vacío)"
     RESPONSE=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito" 2>&1)
     log_response "$RESPONSE"
 
-    ITEMS=$(echo "$RESPONSE" | jq -r '.cantidadItems' 2>/dev/null)
+    ITEMS=$(extraer_valor "$RESPONSE" "cantidadItems")
 
     if [ "$ITEMS" = "0" ]; then
         check_result 0 "Ver carrito vacío"
     else
-        check_result 1 "Ver carrito vacío" "Se esperaban 0 items, encontrados: $ITEMS"
+        check_result 1 "Ver carrito vacío" "Se esperaban 0 items, encontrados: '$ITEMS'"
     fi
 
     # Test 17: Agregar producto al carrito
@@ -390,12 +451,12 @@ test_rf05_carrito() {
     RESPONSE=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito" 2>&1)
     log_response "$RESPONSE"
 
-    ITEMS=$(echo "$RESPONSE" | jq -r '.cantidadItems' 2>/dev/null)
+    ITEMS=$(extraer_valor "$RESPONSE" "cantidadItems")
 
     if [ "$ITEMS" = "3" ]; then
         check_result 0 "Verificar items en carrito (3 items)"
     else
-        check_result 1 "Verificar items" "Se esperaban 3 items, encontrados: $ITEMS"
+        check_result 1 "Verificar items" "Se esperaban 3 items, encontrados: '$ITEMS'"
     fi
 
     # Test 19: Modificar cantidad en carrito
@@ -427,12 +488,12 @@ test_rf05_carrito() {
     RESPONSE=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito" 2>&1)
     log_response "$RESPONSE"
 
-    ITEMS=$(echo "$RESPONSE" | jq -r '.cantidadItems' 2>/dev/null)
+    ITEMS=$(extraer_valor "$RESPONSE" "cantidadItems")
 
     if [ "$ITEMS" = "7" ]; then
         check_result 0 "Verificar total de items (5 + 2 = 7)"
     else
-        check_result 1 "Verificar total" "Se esperaban 7 items, encontrados: $ITEMS"
+        check_result 1 "Verificar total" "Se esperaban 7 items, encontrados: '$ITEMS'"
     fi
 
     # Test 22: Intentar agregar producto sin stock
@@ -488,12 +549,12 @@ test_rf05_carrito() {
     RESPONSE=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito" 2>&1)
     log_response "$RESPONSE"
 
-    ITEMS=$(echo "$RESPONSE" | jq -r '.cantidadItems' 2>/dev/null)
+    ITEMS=$(extraer_valor "$RESPONSE" "cantidadItems")
 
     if [ "$ITEMS" = "5" ]; then
         check_result 0 "Verificar items después de eliminar (7 - 2 = 5)"
     else
-        check_result 1 "Verificar items" "Se esperaban 5 items, encontrados: $ITEMS"
+        check_result 1 "Verificar items" "Se esperaban 5 items, encontrados: '$ITEMS'"
     fi
 
     # Test 27: Vaciar carrito
@@ -513,12 +574,12 @@ test_rf05_carrito() {
     RESPONSE=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito" 2>&1)
     log_response "$RESPONSE"
 
-    ITEMS=$(echo "$RESPONSE" | jq -r '.cantidadItems' 2>/dev/null)
+    ITEMS=$(extraer_valor "$RESPONSE" "cantidadItems")
 
     if [ "$ITEMS" = "0" ]; then
         check_result 0 "Verificar carrito vacío al final"
     else
-        check_result 1 "Verificar carrito vacío" "Se esperaban 0 items, encontrados: $ITEMS"
+        check_result 1 "Verificar carrito vacío" "Se esperaban 0 items, encontrados: '$ITEMS'"
     fi
 }
 
