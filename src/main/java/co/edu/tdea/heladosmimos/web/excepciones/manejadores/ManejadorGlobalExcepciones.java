@@ -100,6 +100,12 @@ public class ManejadorGlobalExcepciones {
         return construirRespuestaError(ex, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ConflictoConcurrenciaException.class)
+    public ResponseEntity<Map<String, Object>> manejarConflictoConcurrencia(ConflictoConcurrenciaException ex) {
+        logger.warn("Conflicto de concurrencia detectado: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<Map<String, Object>> manejarErrorPersistencia(DataAccessException ex) {
         logger.error("Error de persistencia: {}", ex.getMessage(), ex);

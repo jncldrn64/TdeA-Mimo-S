@@ -42,6 +42,7 @@ public class ControladorBienvenida {
         endpointsCarrito.put("modificar", "POST /api/carrito/modificar?idProducto={id}&nuevaCantidad={n}");
         endpointsCarrito.put("eliminar", "DELETE /api/carrito/eliminar/{id}");
         endpointsCarrito.put("vaciar", "DELETE /api/carrito/vaciar");
+        endpointsCarrito.put("checkout", "POST /api/carrito/checkout");
 
         Map<String, Object> endpoints = new HashMap<>();
         endpoints.put("autenticacion", endpointsAuth);
