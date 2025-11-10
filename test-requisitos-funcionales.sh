@@ -557,19 +557,124 @@ test_rf05_carrito() {
         check_result 1 "Verificar items" "Se esperaban 5 items, encontrados: '$ITEMS'"
     fi
 
-    # Test 27: Vaciar carrito
+    # Test 27: Reducir stock manualmente para generar advertencia
+    log_request "PATCH" "/api/productos/$ID_PRODUCTO_1/stock (reducir a 2)"
+    RESPONSE=$(curl -s -X PATCH "$BASE_URL/productos/$ID_PRODUCTO_1/stock?stock=2" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q '"success":true'; then
+        check_result 0 "Reducir stock del producto 1 a 2 unidades"
+    else
+        check_result 1 "Reducir stock manualmente"
+    fi
+
+    # Test 28: Verificar advertencias en carrito
+    log_request "GET" "/api/carrito (con advertencias)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q '"advertencias"'; then
+        check_result 0 "Detectar advertencias de stock insuficiente en carrito"
+    else
+        check_result 1 "Detectar advertencias" "No se encontró campo 'advertencias'"
+    fi
+
+    # Test 29: Restaurar stock para checkout
+    log_request "PATCH" "/api/productos/$ID_PRODUCTO_1/stock (restaurar a 100)"
+    RESPONSE=$(curl -s -X PATCH "$BASE_URL/productos/$ID_PRODUCTO_1/stock?stock=100" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q '"success":true'; then
+        check_result 0 "Restaurar stock del producto 1"
+    else
+        check_result 1 "Restaurar stock"
+    fi
+
+    # Test 30: Checkout exitoso
+    log_request "POST" "/api/carrito/checkout"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q '"success":true'; then
+        check_result 0 "Checkout exitoso (stock reducido atómicamente)"
+    else
+        check_result 1 "Checkout exitoso"
+    fi
+
+    # Test 31: Verificar que el carrito se vació después del checkout
+    log_request "GET" "/api/carrito (después de checkout)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito" 2>&1)
+    log_response "$RESPONSE"
+
+    ITEMS=$(extraer_valor "$RESPONSE" "cantidadItems")
+
+    if [ "$ITEMS" = "0" ]; then
+        check_result 0 "Carrito vaciado automáticamente después de checkout"
+    else
+        check_result 1 "Carrito vaciado" "Se esperaban 0 items, encontrados: '$ITEMS'"
+    fi
+
+    # Test 32: Intentar checkout con carrito vacío
+    log_request "POST" "/api/carrito/checkout (carrito vacío)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q 'CarritoVacioException'; then
+        check_result 0 "Rechazo de checkout con carrito vacío"
+    else
+        check_result 1 "Rechazo de checkout vacío"
+    fi
+
+    # Test 33: Agregar producto para test de stock insuficiente
+    log_request "POST" "/api/carrito/agregar (para test de stock)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO_1&cantidad=50" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q '"success":true'; then
+        check_result 0 "Agregar producto para test de conflicto de stock"
+    else
+        check_result 1 "Agregar producto para test"
+    fi
+
+    # Test 34: Reducir stock externamente (simular otro usuario comprando)
+    log_request "PATCH" "/api/productos/$ID_PRODUCTO_1/stock (reducir a 10)"
+    RESPONSE=$(curl -s -X PATCH "$BASE_URL/productos/$ID_PRODUCTO_1/stock?stock=10" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q '"success":true'; then
+        check_result 0 "Simular compra externa reduciendo stock"
+    else
+        check_result 1 "Reducir stock externamente"
+    fi
+
+    # Test 35: Checkout con stock insuficiente
+    log_request "POST" "/api/carrito/checkout (stock insuficiente)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q 'StockInsuficienteException'; then
+        check_result 0 "Rechazo de checkout por stock insuficiente"
+    else
+        check_result 1 "Rechazo por stock insuficiente"
+    fi
+
+    # Test 36: Vaciar carrito manualmente
     log_request "DELETE" "/api/carrito/vaciar"
     RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X DELETE \
         "$BASE_URL/carrito/vaciar" 2>&1)
     log_response "$RESPONSE"
 
     if echo "$RESPONSE" | grep -q '"success":true'; then
-        check_result 0 "Vaciar carrito completamente"
+        check_result 0 "Vaciar carrito manualmente"
     else
         check_result 1 "Vaciar carrito"
     fi
 
-    # Test 28: Verificar carrito vacío
+    # Test 37: Verificar carrito vacío final
     log_request "GET" "/api/carrito (vacío final)"
     RESPONSE=$(curl -s -b $COOKIES -c $COOKIES "$BASE_URL/carrito" 2>&1)
     log_response "$RESPONSE"

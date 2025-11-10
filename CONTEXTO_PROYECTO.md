@@ -973,8 +973,8 @@ curl -b cookies_b.txt -c cookies_b.txt -X POST http://localhost:8080/api/carrito
 - **Excepciones personalizadas:** 16 (+ ConflictoConcurrenciaException)
 - **Servicios (RF):** 4
 - **Casos de Uso:** 9
-- **Controladores REST:** 5 (incluyeControladorAutenticacionREST)
-- **Tests automatizados:** 28
+- **Controladores REST:** 5 (incluye ControladorAutenticacionREST)
+- **Tests automatizados:** 37 (RF-03: 5, RF-01: 10, RF-05: 22)
 - **Handlers de excepciones:** 16 (+ conflicto de concurrencia)
 - **Protección contra race conditions:** ✅ Implementada (Optimistic Locking)
 
