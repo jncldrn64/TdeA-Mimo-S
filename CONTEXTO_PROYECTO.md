@@ -732,6 +732,230 @@ public ResponseEntity<?> crear(...)
 
 ---
 
+## ⚡ Manejo de Concurrencia y Race Conditions
+
+### Problema Resuelto
+
+**Escenarios de race condition en e-commerce:**
+
+1. **Compra simultánea:**
+   - Stock: 10 unidades
+   - Usuario A agrega 8 al carrito
+   - Usuario B agrega 8 al carrito
+   - Ambos intentan checkout → **Conflicto**
+
+2. **Admin modifica stock:**
+   - Usuario tiene 5 productos en carrito
+   - Admin actualiza stock → 0
+   - Usuario intenta checkout → **Stock insuficiente**
+
+3. **Productos desactivados:**
+   - Usuario agrega producto al carrito
+   - Admin desactiva producto
+   - Usuario intenta checkout → **Producto no disponible**
+
+### Solución Implementada: Optimistic Locking
+
+**Enfoque híbrido:**
+- ❌ NO reservar stock al agregar al carrito (evita bloqueos innecesarios)
+- ✅ Validación atómica al checkout
+- ✅ Advertencias en tiempo real al ver carrito
+
+#### 1. @Version en Producto.java
+
+```java
+@Entity
+public class Producto {
+    @Id
+    private Long idProducto;
+
+    @Version  // ← JPA maneja optimistic locking automáticamente
+    private Long version;
+
+    private Integer stockDisponible;
+}
+```
+
+**Cómo funciona:**
+- Cada UPDATE incrementa `version` automáticamente
+- Si otro usuario modificó el registro, JPA lanza `OptimisticLockException`
+- La transacción se reversa automáticamente
+
+#### 2. Checkout Atómico
+
+**Ubicación:** `ServicioCarritoCompras.procesarCheckout()`
+
+```java
+@Transactional
+public void procesarCheckout() throws ConflictoConcurrenciaException {
+    try {
+        for (ItemCarrito item : itemsDelCarrito) {
+            Producto producto = repo.buscarPorId(item.getIdProducto());
+
+            // Validar stock
+            if (producto.getStockDisponible() < item.getCantidad()) {
+                throw new StockInsuficienteException(...);
+            }
+
+            // Reducir stock (si otro usuario lo modificó, falla aquí)
+            producto.setStockDisponible(producto.getStockDisponible() - item.getCantidad());
+            repo.guardar(producto);  // Si version cambió → OptimisticLockException
+        }
+
+        // Checkout exitoso
+        vaciarCarritoCompleto();
+
+    } catch (OptimisticLockException e) {
+        throw new ConflictoConcurrenciaException(
+            "Otro usuario modificó el stock. Revisa tu carrito e intenta nuevamente.");
+    }
+}
+```
+
+**Garantías:**
+- ✅ Validación + reducción de stock es **ATÓMICA**
+- ✅ Si falla, **ningún cambio** se persiste (rollback automático)
+- ✅ Usuario recibe error claro si hay conflicto
+
+#### 3. Advertencias Preventivas
+
+**Endpoint:** `GET /api/carrito`
+
+```java
+public List<String> validarDisponibilidadItems() {
+    List<String> advertencias = new ArrayList<>();
+
+    for (ItemCarrito item : itemsDelCarrito) {
+        Producto producto = repo.buscarPorId(item.getIdProducto());
+
+        if (producto.getStockDisponible() < item.getCantidad()) {
+            advertencias.add(producto.getNombre() +
+                ": solo quedan " + producto.getStockDisponible() +
+                " unidades (tienes " + item.getCantidad() + " en carrito)");
+        }
+
+        if (!producto.getEstaActivo()) {
+            advertencias.add(producto.getNombre() + " ya no está disponible");
+        }
+    }
+
+    return advertencias;
+}
+```
+
+**Respuesta JSON:**
+```json
+{
+  "items": [...],
+  "total": 27500,
+  "advertencias": [
+    "Helado Vainilla: solo quedan 5 unidades (tienes 8 en carrito)",
+    "Helado Chocolate ya no está disponible"
+  ]
+}
+```
+
+### Flujo de Usuario
+
+```
+1. Usuario agrega productos al carrito
+   ↓
+2. GET /api/carrito → ve advertencias si stock cambió
+   ↓
+3. POST /api/carrito/checkout
+   ↓
+4a. Si stock OK → Checkout exitoso, stock reducido
+4b. Si conflicto → Error 409 Conflict, usuario reintenta
+```
+
+### Casos de Uso Reales
+
+#### Caso 1: Usuario Lento vs Usuario Rápido
+
+```
+Stock inicial: 10 unidades
+
+Usuario A (lento):
+  10:00 → Agrega 8 al carrito
+  10:05 → Ve carrito (todo OK, stock aún 10)
+  10:10 → Checkout → SUCCESS, stock ahora 2
+
+Usuario B (lento):
+  10:02 → Agrega 8 al carrito
+  10:08 → Ve carrito → ⚠️ "Solo quedan 2 unidades (tienes 8)"
+  10:12 → Checkout → ERROR 400 "Stock insuficiente"
+```
+
+#### Caso 2: Checkout Simultáneo (Exacto Mismo Instante)
+
+```
+Stock: 5 unidades
+
+Usuario A y B presionan "Comprar" SIMULTÁNEAMENTE (ambos quieren 5)
+
+Transacción A:
+  1. Lee Producto (version=10, stock=5)
+  2. Reduce stock → 0
+  3. Actualiza BD → version=11 ✅ COMMIT
+
+Transacción B:
+  1. Lee Producto (version=10, stock=5)
+  2. Reduce stock → 0
+  3. Actualiza BD → OptimisticLockException ❌
+     (versión esperada 10, actual 11)
+  4. ROLLBACK automático
+  5. Usuario B recibe: "Otro usuario modificó el stock"
+```
+
+**Resultado:**
+- Usuario A: Checkout exitoso
+- Usuario B: Error claro, puede reintentar (pero ya no hay stock)
+
+### Testing de Concurrencia
+
+**Endpoint de prueba:** `POST /api/carrito/checkout`
+
+**Simular conflicto:**
+```bash
+# Terminal 1 - Usuario A
+curl -b cookies_a.txt -c cookies_a.txt -X POST http://localhost:8080/api/carrito/checkout
+
+# Terminal 2 - Usuario B (ejecutar AL MISMO TIEMPO)
+curl -b cookies_b.txt -c cookies_b.txt -X POST http://localhost:8080/api/carrito/checkout
+```
+
+**Resultado esperado:**
+- Uno recibe: `{"success": true, "mensaje": "Checkout exitoso"}`
+- Otro recibe: `{"success": false, "error": "Otro usuario modificó el stock", "tipoExcepcion": "ConflictoConcurrenciaException"}`
+
+### Ventajas de Este Enfoque
+
+**vs. Reservas con TTL:**
+- ✅ Más simple (no necesita jobs/cron)
+- ✅ No bloquea stock innecesariamente
+- ✅ No penaliza a usuarios que abandonan carrito
+
+**vs. Validación Simple:**
+- ✅ Protección real contra race conditions
+- ✅ Transacciones atómicas garantizadas
+- ✅ Advertencias preventivas mejoran UX
+
+### Limitaciones Conocidas
+
+1. **Usuario "lento" pierde:**
+   - Si 2 usuarios compran simultáneamente, el más lento ve error
+   - **Solución:** Mensaje claro + opción de reintentar
+
+2. **No hay "reserva suave":**
+   - Stock no se reserva al agregar al carrito
+   - **Solución:** Advertencias al ver carrito
+
+3. **Escalabilidad horizontal:**
+   - `@SessionScope` no escala sin Redis/sticky sessions
+   - **Solución futura:** Migrar a sesiones distribuidas si es necesario
+
+---
+
 ## 📊 Estado Actual del Proyecto
 
 ### Requisitos Funcionales
@@ -746,12 +970,13 @@ public ResponseEntity<?> crear(...)
 
 ### Métricas de Código
 
-- **Excepciones personalizadas:** 15
+- **Excepciones personalizadas:** 16 (+ ConflictoConcurrenciaException)
 - **Servicios (RF):** 4
 - **Casos de Uso:** 9
-- **Controladores REST:** 4
+- **Controladores REST:** 5 (incluyeControladorAutenticacionREST)
 - **Tests automatizados:** 28
-- **Handlers de excepciones:** 15
+- **Handlers de excepciones:** 16 (+ conflicto de concurrencia)
+- **Protección contra race conditions:** ✅ Implementada (Optimistic Locking)
 
 ### Base de Datos
 
