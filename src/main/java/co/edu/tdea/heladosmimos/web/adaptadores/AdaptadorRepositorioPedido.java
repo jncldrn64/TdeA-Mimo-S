@@ -16,4 +16,9 @@ public interface AdaptadorRepositorioPedido
     default Optional<Pedido> buscarPorId(Long idPedido) {
         return findById(idPedido);
     }
+
+    @Override
+    default Pedido guardar(Pedido pedido) {
+        return save(pedido);
+    }
 }
