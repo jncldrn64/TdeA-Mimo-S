@@ -19,6 +19,13 @@ public class ControladorBienvenida {
         info.put("version", "1.0.0");
         info.put("status", "running");
 
+        Map<String, String> endpointsAuth = new HashMap<>();
+        endpointsAuth.put("validarCorreo", "POST /api/auth/validar-correo");
+        endpointsAuth.put("registrar", "POST /api/auth/registrar");
+        endpointsAuth.put("login", "POST /api/auth/login");
+        endpointsAuth.put("logout", "POST /api/auth/logout");
+        endpointsAuth.put("sesionActual", "GET /api/auth/session");
+
         Map<String, String> endpointsInventario = new HashMap<>();
         endpointsInventario.put("listar", "GET /api/productos");
         endpointsInventario.put("listarActivos", "GET /api/productos/activos");
@@ -37,17 +44,20 @@ public class ControladorBienvenida {
         endpointsCarrito.put("vaciar", "DELETE /api/carrito/vaciar");
 
         Map<String, Object> endpoints = new HashMap<>();
+        endpoints.put("autenticacion", endpointsAuth);
         endpoints.put("inventario", endpointsInventario);
         endpoints.put("carrito", endpointsCarrito);
 
         info.put("endpoints", endpoints);
 
         Map<String, String> ejemplos = new HashMap<>();
-        ejemplos.put("1_registrar_producto", "curl -X POST 'http://localhost:8080/api/productos?nombre=Helado%20Vainilla&precio=5500&stock=100&descripcion=Delicioso'");
-        ejemplos.put("2_listar_productos", "curl http://localhost:8080/api/productos");
-        ejemplos.put("3_actualizar_stock", "curl -X PATCH 'http://localhost:8080/api/productos/1/stock?stock=200'");
-        ejemplos.put("4_agregar_al_carrito", "curl -X POST 'http://localhost:8080/api/carrito/agregar?idProducto=1&cantidad=2'");
-        ejemplos.put("5_ver_carrito", "curl http://localhost:8080/api/carrito");
+        ejemplos.put("1_registrar_usuario", "curl -X POST 'http://localhost:8080/api/auth/registrar' -d 'correo=test@mimo.com&contrasena=Test123&nombre=Juan&apellido=Perez&telefono=3001234567&direccion=Calle%2010&nit=123456'");
+        ejemplos.put("2_login", "curl -X POST 'http://localhost:8080/api/auth/login' -d 'correo=test@mimo.com&contrasena=Test123'");
+        ejemplos.put("3_registrar_producto", "curl -X POST 'http://localhost:8080/api/productos?nombre=Helado%20Vainilla&precio=5500&stock=100&descripcion=Delicioso'");
+        ejemplos.put("4_listar_productos", "curl http://localhost:8080/api/productos");
+        ejemplos.put("5_actualizar_stock", "curl -X PATCH 'http://localhost:8080/api/productos/1/stock?stock=200'");
+        ejemplos.put("6_agregar_al_carrito", "curl -X POST 'http://localhost:8080/api/carrito/agregar?idProducto=1&cantidad=2'");
+        ejemplos.put("7_ver_carrito", "curl http://localhost:8080/api/carrito");
 
         info.put("ejemplos", ejemplos);
 
