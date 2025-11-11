@@ -237,11 +237,11 @@ public class ServicioCarritoCompras {
             }
 
             // Crear pedido con los datos del carrito
-            // NOTA: El pedido se crea en estado PENDIENTE_PAGO
+            // NOTA: El pedido se crea en estado PAGO_PENDIENTE
             // ServicioPagos lo actualizará a PAGO_CONFIRMADO después de validar pago
             Pedido pedido = new Pedido();
             pedido.setIdUsuario(usuario.getIdUsuario());
-            pedido.setEstadoPedido(EstadoPedido.PENDIENTE_PAGO);
+            pedido.setEstadoPedido(EstadoPedido.PAGO_PENDIENTE);
             pedido.setMetodoPago(null); // Se asignará en ServicioPagos según método elegido
             pedido.setFechaCreacion(LocalDateTime.now());
             // fechaConfirmacionPago se asigna en ServicioPagos después del pago exitoso
