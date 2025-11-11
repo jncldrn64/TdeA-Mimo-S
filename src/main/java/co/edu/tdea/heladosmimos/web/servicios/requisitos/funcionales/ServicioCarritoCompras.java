@@ -211,6 +211,9 @@ public class ServicioCarritoCompras {
 
         try {
             // Validar disponibilidad y reducir stock ATÓMICAMENTE
+            // TODO ARQUITECTURAL: Stock debería reducirse en ServicioPagos DESPUÉS de confirmar pago,
+            // no en checkout. Requiere implementar tabla pedido_items para persistir items del carrito
+            // en el pedido. Por ahora, reducimos stock aquí como solución temporal.
             for (ItemCarrito item : itemsDelCarrito) {
                 Producto producto = repositorioProducto.buscarPorId(item.getIdProducto())
                     .orElseThrow(() -> new ProductoNoEncontradoException(
@@ -234,12 +237,14 @@ public class ServicioCarritoCompras {
             }
 
             // Crear pedido con los datos del carrito
+            // NOTA: El pedido se crea en estado PENDIENTE_PAGO
+            // ServicioPagos lo actualizará a PAGO_CONFIRMADO después de validar pago
             Pedido pedido = new Pedido();
             pedido.setIdUsuario(usuario.getIdUsuario());
-            pedido.setEstadoPedido(EstadoPedido.PAGO_CONFIRMADO);
-            pedido.setMetodoPago(MetodoPago.TARJETA_CREDITO_EN_LINEA); // Por defecto, se puede parametrizar después
+            pedido.setEstadoPedido(EstadoPedido.PENDIENTE_PAGO);
+            pedido.setMetodoPago(null); // Se asignará en ServicioPagos según método elegido
             pedido.setFechaCreacion(LocalDateTime.now());
-            pedido.setFechaConfirmacionPago(LocalDateTime.now());
+            // fechaConfirmacionPago se asigna en ServicioPagos después del pago exitoso
 
             // Calcular subtotal e IVA (19% Colombia)
             Double subtotal = totalCalculado / 1.19; // Sacar el IVA incluido

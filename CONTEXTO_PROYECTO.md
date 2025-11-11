@@ -29,7 +29,7 @@ Este documento existe para que **cualquier instancia de Claude** (u otro modelo)
 
 Implementar 5 requisitos funcionales (RF) principales:
 - **RF-01:** Registro de Inventario ✅ IMPLEMENTADO (Backend + API REST completos)
-- **RF-02:** Pasarela de Pagos ❌ NO IMPLEMENTADO (Falta backend + frontend)
+- **RF-02:** Pasarela de Pagos ✅ IMPLEMENTADO (Backend + API REST completos, faltan templates HTML)
 - **RF-03:** Login y Registro de Usuarios ✅ IMPLEMENTADO (Backend + API REST completos)
 - **RF-04:** Facturación ✅ IMPLEMENTADO (Backend + API REST completos, faltan templates HTML)
 - **RF-05:** Carrito de Compras ✅ IMPLEMENTADO (Backend + API REST completos)
@@ -1141,12 +1141,12 @@ curl -b cookies_b.txt -c cookies_b.txt -X POST http://localhost:8080/api/carrito
 | RF | Nombre | Estado Backend | Estado Frontend | Tests |
 |----|--------|----------------|-----------------|-------|
 | **RF-01** | Inventario | ✅ 100% Completo | ❌ Sin templates | 17 tests ✅ |
-| **RF-02** | Pasarela de Pagos | ❌ NO IMPLEMENTADO | ❌ NO EXISTE | 0 tests |
+| **RF-02** | Pasarela de Pagos | ✅ 100% Completo | ❌ Sin templates | 0 tests (por crear) |
 | **RF-03** | Login/Registro | ✅ 100% Completo | ❌ Sin templates | 9 tests ✅ |
 | **RF-04** | Facturación | ✅ 100% Completo | ❌ Sin templates | 6 tests ✅ |
 | **RF-05** | Carrito | ✅ 100% Completo | ❌ Sin templates | 15 tests ✅ |
 
-**Total:** 4/5 RFs implementados en backend (80%), 0/5 con frontend completo (0%)
+**Total:** 5/5 RFs implementados en backend (100%), 0/5 con frontend completo (0%)
 
 ### Detalle de Implementación por RF
 
@@ -1169,43 +1169,43 @@ curl -b cookies_b.txt -c cookies_b.txt -X POST http://localhost:8080/api/carrito
 - `PATCH /api/productos/{id}/activar` - Activar producto
 - `PATCH /api/productos/{id}/desactivar` - Desactivar producto
 
-#### ❌ RF-02: Pasarela de Pagos (0% - CRÍTICO)
-**Estado:** COMPLETAMENTE AUSENTE
+#### ✅ RF-02: Pasarela de Pagos (100% Backend)
+**Archivos clave:**
+- `ServicioPagos.java` - Lógica de pagos con validación ficticia
+- `CasoDeUsoProcesarPago.java` - Procesar pago
+- `CasoDeUsoConsultarEstadoPago.java` - Consultar estado
+- `ControladorPagos.java` - HTML (sin templates)
+- `ControladorPagosREST.java` - API REST completa
+- `DatosPago.java` - DTO para capturar datos de pago
+- Excepciones: `PagoRechazadoException`, `DatosTarjetaInvalidosException`, `MetodoPagoNoSoportadoException`, `PedidoYaPagadoException`
 
-**Falta implementar:**
+**Endpoints REST:**
+- `POST /api/pago/procesar` - Procesar pago
+- `GET /api/pago/estado/{idPedido}` - Consultar estado de pago
+
+**Endpoints HTML:**
+- `GET /pasarela/{idPedido}` - Formulario de pago
+- `POST /pasarela/procesar` - Procesar pago
+- `GET /pasarela/confirmacion` - Confirmación de pago
+- ❌ Falta: Templates (`pasarela-pagos.html`, `confirmacion-pago.html`)
+
+**Características:**
+- ✅ Validación ficticia para testing sin integración real
+- ✅ Tarjetas de prueba hardcoded: `4111111111111111` (Visa), `5500000000000004` (Mastercard)
+- ✅ Validación de formato: 16 dígitos, fecha MM/AA no vencida, CVV 3 dígitos
+- ✅ Efectivo/datáfono contra entrega: genera código de 6 dígitos aleatorio
+- ✅ Códigos logueados a consola para testing: `[PAGO CONTRA ENTREGA] Código: 487293`
+- ✅ Devuelve instrucciones de pago en respuesta JSON
+- ✅ Actualiza pedido a PAGO_CONFIRMADO solo después de validar pago
+- ✅ Previene doble pago del mismo pedido
+- ⚠️ Métodos no soportados: TRANSFERENCIA_EN_LINEA, PAYPAL_EN_LINEA
+
+**Flujo implementado:**
 ```
-Backend:
-  - ServicioPagos.java
-  - CasoDeUsoProcesarPago.java
-  - ControladorPagos.java (HTML)
-  - ControladorPagosREST.java (REST)
-  - PagoRechazadoException.java
-  - DatosTarjetaInvalidosException.java
-  - MetodoPagoNoSoportadoException.java
-
-Frontend:
-  - templates/pasarela-pagos.html
-
-Endpoints necesarios:
-  - GET  /pasarela/{idPedido} - Formulario de pago
-  - POST /api/pago/procesar - Procesar pago (ficticio)
-  - GET  /api/pago/estado/{idPedido} - Consultar estado
-```
-
-**Impacto actual:**
-- ⚠️ `ServicioCarritoCompras.procesarCheckout()` asume pago confirmado sin validación
-- ⚠️ Stock se reduce antes de confirmar pago real
-- ⚠️ Método de pago hardcoded: `TARJETA_CREDITO_EN_LINEA`
-
-**Flujo actual (INCORRECTO):**
-```
-Carrito → Checkout → Pedido PAGO_CONFIRMADO ✅ Stock reducido
+Carrito → Checkout (PENDIENTE_PAGO) → Pasarela → Validar pago → PAGO_CONFIRMADO
 ```
 
-**Flujo esperado (CORRECTO):**
-```
-Carrito → Checkout (PENDIENTE_PAGO) → Pasarela → Pago → PAGO_CONFIRMADO → Stock reducido
-```
+**NOTA ARQUITECTURAL:** Stock aún se reduce en checkout (línea 232 `ServicioCarritoCompras.java`) como solución temporal. Idealmente debería reducirse en `ServicioPagos` después de confirmar pago, pero esto requiere implementar tabla `pedido_items` para persistir items del carrito en el pedido.
 
 #### ✅ RF-03: Login/Registro (100% Backend)
 **Archivos clave:**
@@ -1293,7 +1293,7 @@ Carrito → Checkout (PENDIENTE_PAGO) → Pasarela → Pago → PAGO_CONFIRMADO 
 
 ### Templates HTML/Thymeleaf
 
-**Estado:** 0/8 templates implementados (0%)
+**Estado:** 0/10 templates implementados (0%)
 
 ```
 src/main/resources/templates/
@@ -1303,6 +1303,8 @@ src/main/resources/templates/
 ├── catalogo.html                 ❌ FALTA
 ├── carrito.html                  ❌ FALTA
 ├── pasarela-pagos.html           ❌ FALTA
+├── confirmacion-pago.html        ❌ FALTA
+├── error.html                    ❌ FALTA (opcional)
 └── facturacion/
     ├── formulario-factura.html   ❌ FALTA
     └── detalle-factura.html      ❌ FALTA
@@ -1312,36 +1314,36 @@ src/main/resources/templates/
 
 ### Controladores Existentes
 
-**Controladores HTML (@Controller):** 5/6 implementados
+**Controladores HTML (@Controller):** 6/6 implementados
 - ✅ `ControladorAutenticacion.java` - Login y registro (sin templates)
 - ✅ `ControladorCatalogo.java` - Catálogo (sin templates)
 - ✅ `ControladorCarrito.java` - Carrito (sin templates)
 - ✅ `ControladorFacturacion.java` - Facturación (sin templates)
+- ✅ `ControladorPagos.java` - Pasarela de pagos (sin templates)
 - ✅ `ControladorBienvenida.java` - Info de API (GET /)
-- ❌ `ControladorPagos.java` - NO EXISTE
 
-**Controladores REST (@RestController):** 4/5 implementados
+**Controladores REST (@RestController):** 5/5 implementados
 - ✅ `ControladorAutenticacionREST.java` - API de auth completa
 - ✅ `ControladorProductoREST.java` - API de inventario completa
 - ✅ `ControladorCarritoREST.java` - API de carrito completa
 - ✅ `ControladorFacturacionREST.java` - API de facturación completa
-- ❌ `ControladorPagosREST.java` - NO EXISTE
+- ✅ `ControladorPagosREST.java` - API de pagos completa
 
 ### Métricas de Código
 
-- **Excepciones personalizadas:** 20+ (incluye facturación)
-- **Servicios (RF):** 5 (Inventario, Autenticación, Registro, Carrito, Facturación)
-- **Casos de Uso:** 10
-- **Controladores HTML:** 5 (sin templates)
+- **Excepciones personalizadas:** 24+ (incluye pagos y facturación)
+- **Servicios (RF):** 6 (Inventario, Autenticación, Registro, Carrito, Facturación, Pagos)
+- **Casos de Uso:** 12 (incluye CasoDeUsoProcesarPago, CasoDeUsoConsultarEstadoPago)
+- **Controladores HTML:** 6 (sin templates)
 - **Controladores REST:** 5 (100% funcionales)
 - **Tests automatizados:** 47/50 pasando (94%)
   - RF-01: 17 tests ✅
   - RF-03: 9 tests ✅
   - RF-04: 6 tests ✅
   - RF-05: 15 tests ✅
-  - RF-02: 0 tests (no implementado)
+  - RF-02: 0 tests (por implementar)
   - Catálogo HTML: 3 tests ❌ (sin templates)
-- **Handlers de excepciones:** 19
+- **Handlers de excepciones:** 23 (incluye 4 de pagos)
 - **Protección contra race conditions:** ✅ Implementada (Optimistic Locking)
 - **Estrategia de vistas:** ✅ Híbrida (Thymeleaf + AJAX) - Backend listo, faltan templates
 
@@ -1361,26 +1363,32 @@ src/main/resources/templates/
 
 ### Inconsistencias y Problemas Conocidos
 
-#### 🔴 CRÍTICO: RF-02 (Pasarela de Pagos) Ausente
+#### 🟡 ARQUITECTURAL: Stock se Reduce en Checkout (Temporal)
 
-**Problema:** `ServicioCarritoCompras.procesarCheckout()` asume pago confirmado sin validar.
+**Problema:** `ServicioCarritoCompras.procesarCheckout()` reduce stock antes de confirmar pago.
 
 ```java
-// ServicioCarritoCompras.java:189-193
-pedido.setEstadoPedido(EstadoPedido.PAGO_CONFIRMADO);  // ❌ Sin validar pago
-pedido.setMetodoPago(MetodoPago.TARJETA_CREDITO_EN_LINEA);  // ❌ Hardcoded
+// ServicioCarritoCompras.java:214-234
+// TODO ARQUITECTURAL: Stock debería reducirse en ServicioPagos DESPUÉS de confirmar pago,
+// no en checkout. Requiere implementar tabla pedido_items para persistir items del carrito
+// en el pedido. Por ahora, reducimos stock aquí como solución temporal.
 ```
 
-**Impacto:**
-- Stock se reduce sin confirmar pago real
-- No hay forma de elegir método de pago
-- Flujo de negocio incompleto
+**Estado actual:**
+- ✅ Checkout crea pedidos con estado `PENDIENTE_PAGO` (correcto)
+- ✅ ServicioPagos actualiza a `PAGO_CONFIRMADO` después de validar (correcto)
+- ⚠️ Stock se reduce en checkout en lugar de después del pago (temporal)
 
-**Solución recomendada:**
-1. Separar checkout en 2 pasos:
-   - `crearPedidoPendiente()` - Sin reducir stock
-   - `confirmarPagoPedido()` - Reduce stock solo si pago exitoso
-2. Implementar RF-02 completo (ServicioPagos + casos de uso + controladores)
+**Razón de solución temporal:**
+- No existe tabla `pedido_items` para persistir items del carrito en el pedido
+- `ServicioPagos` necesita acceder a los items del pedido para reducir stock
+- Sin esta tabla, no hay forma de recuperar los items después del checkout
+
+**Solución futura:**
+1. Crear tabla `pedido_items` (idPedido, idProducto, cantidad, precioUnitario)
+2. Guardar items del carrito en `pedido_items` durante checkout
+3. Mover reducción de stock a `ServicioPagos.procesarPago()`
+4. Eliminar reducción de stock de `ServicioCarritoCompras.procesarCheckout()`
 
 #### ⚠️ MEDIA: Catálogo Requiere Login
 
@@ -1412,38 +1420,44 @@ pedido.setCostoEnvio(0.0);  // ❌ Hardcoded, debería calcularse
 
 ### Prioridades de Implementación
 
-#### 🔴 PRIORIDAD CRÍTICA (Bloquea flujo completo)
-1. **RF-02: Pasarela de Pagos (Backend + Frontend)**
-   - `ServicioPagos.java`
-   - `CasoDeUsoProcesarPago.java`
-   - `ControladorPagos.java` + `ControladorPagosREST.java`
-   - Excepciones específicas (PagoRechazadoException, etc.)
-   - Template `pasarela-pagos.html`
-   - Lógica de validación de pago (ficticia por ahora)
-   - Actualización de estado de pedido
-
-#### 🟡 PRIORIDAD ALTA (Necesario para usar la aplicación)
-2. **Templates HTML/Thymeleaf (8 archivos)**
+#### 🔴 PRIORIDAD CRÍTICA (Bloquea uso de la aplicación)
+1. **Templates HTML/Thymeleaf (10 archivos)**
    - `login.html`, `registro-paso1.html`, `registro-paso2.html`
    - `catalogo.html`
    - `carrito.html`
-   - `pasarela-pagos.html`
+   - `pasarela-pagos.html`, `confirmacion-pago.html`
    - `formulario-factura.html`, `detalle-factura.html`
+   - `error.html` (opcional, para errores genéricos)
+
+#### 🟡 PRIORIDAD ALTA (Mejoras al flujo)
+2. **Tests para RF-02 (Pasarela de Pagos)**
+   - Agregar función `test_rf02_pagos()` a `test-requisitos-funcionales.sh`
+   - Tests de tarjetas válidas (Visa, Mastercard)
+   - Tests de tarjetas rechazadas
+   - Tests de contra entrega (efectivo, datáfono)
+   - Tests de validación (CVV, fecha vencida, etc.)
+   - Tests de doble pago (PedidoYaPagadoException)
 
 #### 🟢 PRIORIDAD MEDIA (Mejoras funcionales)
-3. **Cálculo dinámico de costoEnvio**
+3. **Tabla pedido_items para items del pedido**
+   - Crear entidad `ItemPedido` (idPedido, idProducto, cantidad, precioUnitario)
+   - Crear repositorio y adaptador
+   - Modificar checkout para guardar items en BD
+   - Mover reducción de stock a ServicioPagos
+
+4. **Cálculo dinámico de costoEnvio**
    - Por dirección, peso, distancia
 
-4. **Sistema de descuentos**
+5. **Sistema de descuentos**
    - Campo `descuento` en `Pedido`
    - Servicio de cupones/promociones
 
-5. **Catálogo público (sin login)**
+6. **Catálogo público (sin login)**
    - Modificar `ControladorCatalogo.java` línea 29
    - Permitir lectura, requerir login solo para comprar
 
 #### 🔵 PRIORIDAD BAJA (Nice to have)
-6. **Búsqueda/Filtros en catálogo**
+7. **Búsqueda/Filtros en catálogo**
    - `GET /api/productos/buscar?q=...`
    - Filtros por categoría, precio, etc.
 
@@ -1459,8 +1473,8 @@ pedido.setCostoEnvio(0.0);  // ❌ Hardcoded, debería calcularse
 3. Login/registro en 2 pasos                        ✅ Backend listo, falta UI
 4. Usuario CON login → Puede agregar al carrito    ✅ Funciona
 5. Ver carrito → Editar cantidades, eliminar items ✅ Backend listo, falta UI
-6. Click "Continuar compra" → Pasarela de pagos    ❌ RF-02 no existe
-7. Elige método pago → Procesa (ficticio)          ❌ RF-02 no existe
+6. Click "Continuar compra" → Pasarela de pagos    ✅ Backend listo, falta UI
+7. Elige método pago → Procesa (ficticio)          ✅ Backend listo, falta UI
 8. Pago exitoso → Pregunta "¿Deseas factura?"      ❌ Lógica no implementada
 9. Si sí → Formulario con datos autocompletados    ✅ Backend listo, falta UI
 10. Genera factura PDF                             ⚠️ Genera registro, falta PDF
@@ -1491,10 +1505,13 @@ pedido.setCostoEnvio(0.0);  // ❌ Hardcoded, debería calcularse
   - Wireframe muestra campo "Descuento", código no lo tiene
 
 #### Página 4: PASARELA DE PAGOS
-- ❌ Backend: Completamente ausente (ServicioPagos, ControladorPagos)
-- ❌ Frontend: No existe
-- ✅ Enum MetodoPago: Ya tiene 6 opciones necesarias
-- ⚠️ Problema: Checkout actual asume pago confirmado sin validar
+- ✅ Backend REST: Completo (`POST /api/pago/procesar`, `GET /api/pago/estado/{idPedido}`)
+- ✅ Backend HTML: Completo (`GET /pasarela/{idPedido}`, `POST /pasarela/procesar`, etc.)
+- ❌ Templates: `pasarela-pagos.html`, `confirmacion-pago.html`
+- ✅ Validación ficticia: Tarjetas de prueba hardcoded (4111111111111111, 5500000000000004)
+- ✅ Contra entrega: Genera códigos de 6 dígitos aleatorios
+- ✅ Logging: Códigos aparecen en consola para testing
+- ⚠️ Problema temporal: Stock se reduce en checkout en lugar de después del pago
 
 #### Página 5: FACTURACIÓN
 - ✅ Backend REST: Completo (`POST /api/factura/generar`, `GET /api/factura/{id}`, etc.)
@@ -1619,15 +1636,15 @@ git push -u origin claude/nombre-feature-sessionId
 3. **Excepciones:** Específicas + `@ControllerAdvice` en `ManejadorGlobalExcepciones.java`
 4. **Convenciones:** Español, max 2 indentaciones, max 5 líneas de comentarios, `throws` > `try-catch`
 5. **Testing:** `./test-requisitos-funcionales.sh` - 47/50 tests pasando (94%)
-6. **RF Implementados (Backend):** 4/5 completos - RF-01, RF-03, RF-04, RF-05
-7. **RF-02 (Pasarela de Pagos):** ❌ COMPLETAMENTE AUSENTE (prioridad crítica)
-8. **Templates HTML:** 0/8 implementados - Backend completo, falta UI
+6. **RF Implementados (Backend):** 5/5 completos (100%) - RF-01, RF-02, RF-03, RF-04, RF-05
+7. **RF-02 (Pasarela de Pagos):** ✅ IMPLEMENTADO - Validación ficticia con tarjetas de prueba
+8. **Templates HTML:** 0/10 implementados - Backend completo, falta UI
 
-**Estado:** Backend API REST funcional (80%), Frontend web no funcional (0%)
+**Estado:** Backend API REST funcional (100%), Frontend web no funcional (0%)
 
 **Archivo más importante:** `ManejadorGlobalExcepciones.java` - maneja TODAS las excepciones.
 
-**Prioridad #1:** Implementar RF-02 (Pasarela de Pagos) - bloquea flujo completo del usuario.
+**Prioridad #1:** Implementar templates HTML/Thymeleaf - backend completo pero sin interfaz web.
 
 ---
 

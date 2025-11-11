@@ -124,6 +124,30 @@ public class ManejadorGlobalExcepciones {
         return construirRespuestaError(ex, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(PagoRechazadoException.class)
+    public ResponseEntity<Map<String, Object>> manejarPagoRechazado(PagoRechazadoException ex) {
+        logger.warn("Pago rechazado: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.PAYMENT_REQUIRED);
+    }
+
+    @ExceptionHandler(DatosTarjetaInvalidosException.class)
+    public ResponseEntity<Map<String, Object>> manejarDatosTarjetaInvalidos(DatosTarjetaInvalidosException ex) {
+        logger.warn("Datos de tarjeta inválidos: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MetodoPagoNoSoportadoException.class)
+    public ResponseEntity<Map<String, Object>> manejarMetodoPagoNoSoportado(MetodoPagoNoSoportadoException ex) {
+        logger.warn("Método de pago no soportado: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PedidoYaPagadoException.class)
+    public ResponseEntity<Map<String, Object>> manejarPedidoYaPagado(PedidoYaPagadoException ex) {
+        logger.warn("Pedido ya pagado: {}", ex.getMessage());
+        return construirRespuestaError(ex, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<Map<String, Object>> manejarErrorPersistencia(DataAccessException ex) {
         logger.error("Error de persistencia: {}", ex.getMessage(), ex);
