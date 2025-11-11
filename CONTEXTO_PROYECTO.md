@@ -1,7 +1,7 @@
 # Contexto del Proyecto: Sistema Helados Mimo's
 
-**Última actualización:** 2025-11-10
-**Versión:** 1.0
+**Última actualización:** 2025-11-11
+**Versión:** 1.1
 **Propósito:** Documento de contexto para Claude Code y otros modelos IA
 
 ---
@@ -28,11 +28,11 @@ Este documento existe para que **cualquier instancia de Claude** (u otro modelo)
 ### Objetivos del Proyecto
 
 Implementar 5 requisitos funcionales (RF) principales:
-- **RF-01:** Registro de Inventario ✅ IMPLEMENTADO
-- **RF-03:** Login y Registro de Usuarios ✅ IMPLEMENTADO
-- **RF-05:** Carrito de Compras ✅ IMPLEMENTADO
-- **RF-02:** Por implementar
-- **RF-04:** Por implementar
+- **RF-01:** Registro de Inventario ✅ IMPLEMENTADO (Backend + API REST completos)
+- **RF-02:** Pasarela de Pagos ❌ NO IMPLEMENTADO (Falta backend + frontend)
+- **RF-03:** Login y Registro de Usuarios ✅ IMPLEMENTADO (Backend + API REST completos)
+- **RF-04:** Facturación ✅ IMPLEMENTADO (Backend + API REST completos, faltan templates HTML)
+- **RF-05:** Carrito de Compras ✅ IMPLEMENTADO (Backend + API REST completos)
 
 ---
 
@@ -1136,34 +1136,373 @@ curl -b cookies_b.txt -c cookies_b.txt -X POST http://localhost:8080/api/carrito
 
 ## 📊 Estado Actual del Proyecto
 
-### Requisitos Funcionales
+### Requisitos Funcionales (Backend API REST)
 
-| RF | Nombre | Estado | Archivos Clave |
-|----|--------|--------|----------------|
-| RF-01 | Inventario | ✅ Completo | `ServicioInventario.java`, `CasoDeUsoRegistrarProducto.java` |
-| RF-02 | (Por definir) | ⏳ Pendiente | - |
-| RF-03 | Login/Registro | ✅ Completo | `ServicioAutenticacion.java`, `ServicioRegistro.java` |
-| RF-04 | (Por definir) | ⏳ Pendiente | - |
-| RF-05 | Carrito | ✅ Completo | `ServicioCarritoCompras.java`, `CasoDeUsoAccesoCarrito.java` |
+| RF | Nombre | Estado Backend | Estado Frontend | Tests |
+|----|--------|----------------|-----------------|-------|
+| **RF-01** | Inventario | ✅ 100% Completo | ❌ Sin templates | 17 tests ✅ |
+| **RF-02** | Pasarela de Pagos | ❌ NO IMPLEMENTADO | ❌ NO EXISTE | 0 tests |
+| **RF-03** | Login/Registro | ✅ 100% Completo | ❌ Sin templates | 9 tests ✅ |
+| **RF-04** | Facturación | ✅ 100% Completo | ❌ Sin templates | 6 tests ✅ |
+| **RF-05** | Carrito | ✅ 100% Completo | ❌ Sin templates | 15 tests ✅ |
+
+**Total:** 4/5 RFs implementados en backend (80%), 0/5 con frontend completo (0%)
+
+### Detalle de Implementación por RF
+
+#### ✅ RF-01: Inventario (100% Backend)
+**Archivos clave:**
+- `ServicioInventario.java` - Lógica de negocio
+- `CasoDeUsoRegistrarProducto.java` - Registro de productos
+- `CasoDeUsoActualizarProducto.java` - Actualización de productos
+- `CasoDeUsoGestionarStock.java` - Gestión de stock
+- `CasoDeUsoConsultarProductos.java` - Consultas
+- `ControladorProductoREST.java` - API REST completa
+- ❌ Falta: Controlador HTML + templates
+
+**Endpoints REST:**
+- `GET /api/productos` - Listar activos
+- `GET /api/productos/{id}` - Buscar por ID
+- `POST /api/productos` - Registrar producto
+- `PUT /api/productos/{id}` - Actualizar producto
+- `PATCH /api/productos/{id}/stock` - Ajustar stock
+- `PATCH /api/productos/{id}/activar` - Activar producto
+- `PATCH /api/productos/{id}/desactivar` - Desactivar producto
+
+#### ❌ RF-02: Pasarela de Pagos (0% - CRÍTICO)
+**Estado:** COMPLETAMENTE AUSENTE
+
+**Falta implementar:**
+```
+Backend:
+  - ServicioPagos.java
+  - CasoDeUsoProcesarPago.java
+  - ControladorPagos.java (HTML)
+  - ControladorPagosREST.java (REST)
+  - PagoRechazadoException.java
+  - DatosTarjetaInvalidosException.java
+  - MetodoPagoNoSoportadoException.java
+
+Frontend:
+  - templates/pasarela-pagos.html
+
+Endpoints necesarios:
+  - GET  /pasarela/{idPedido} - Formulario de pago
+  - POST /api/pago/procesar - Procesar pago (ficticio)
+  - GET  /api/pago/estado/{idPedido} - Consultar estado
+```
+
+**Impacto actual:**
+- ⚠️ `ServicioCarritoCompras.procesarCheckout()` asume pago confirmado sin validación
+- ⚠️ Stock se reduce antes de confirmar pago real
+- ⚠️ Método de pago hardcoded: `TARJETA_CREDITO_EN_LINEA`
+
+**Flujo actual (INCORRECTO):**
+```
+Carrito → Checkout → Pedido PAGO_CONFIRMADO ✅ Stock reducido
+```
+
+**Flujo esperado (CORRECTO):**
+```
+Carrito → Checkout (PENDIENTE_PAGO) → Pasarela → Pago → PAGO_CONFIRMADO → Stock reducido
+```
+
+#### ✅ RF-03: Login/Registro (100% Backend)
+**Archivos clave:**
+- `ServicioAutenticacion.java` - Login
+- `ServicioRegistro.java` - Registro
+- `CasoDeUsoLogin.java` - Caso de uso login
+- `CasoDeUsoIniciarRegistro.java` - Validar correo
+- `CasoDeUsoCompletarRegistro.java` - Completar datos
+- `ControladorAutenticacion.java` - HTML (sin templates)
+- `ControladorAutenticacionREST.java` - API REST completa
+
+**Endpoints REST:**
+- `POST /api/auth/validar-correo` - Validar disponibilidad
+- `POST /api/auth/registrar` - Registro completo
+- `POST /api/auth/login` - Iniciar sesión
+- `POST /api/auth/logout` - Cerrar sesión
+- `GET /api/auth/session` - Obtener sesión actual
+
+**Endpoints HTML:**
+- `GET /login` + `POST /login` - Login
+- `GET /registro` + `POST /registro` - Registro paso 1
+- `GET /registro/completar` + `POST /registro/completar` - Registro paso 2
+- ❌ Falta: Templates (`login.html`, `registro-paso1.html`, `registro-paso2.html`)
+
+#### ✅ RF-04: Facturación (100% Backend)
+**Archivos clave:**
+- `ServicioFacturacion.java` - Lógica de negocio + validación
+- `CasoDeUsoGenerarFactura.java` - Generar factura
+- `CasoDeUsoConsultarFactura.java` - Consultar facturas
+- `ControladorFacturacion.java` - HTML (sin templates)
+- `ControladorFacturacionREST.java` - API REST completa
+- `DatosFacturacion.java` - DTO para formulario
+
+**Endpoints REST:**
+- `POST /api/factura/generar` - Generar factura
+- `GET /api/factura/{idFactura}` - Consultar por ID
+- `GET /api/factura/buscar?numero=X` - Buscar por número
+
+**Endpoints HTML:**
+- `GET /factura/formulario/{idPedido}` - Mostrar formulario
+- `POST /factura/generar` - Generar factura
+- `GET /factura/{idFactura}` - Ver factura
+- `GET /factura/buscar?numero=X` - Buscar factura
+- ❌ Falta: Templates (`formulario-factura.html`, `detalle-factura.html`)
+
+**Características:**
+- ✅ IVA Colombia: 19% (calculado automáticamente)
+- ✅ Número de factura auto-generado: FACT-YYYYMMDD-XXXXX
+- ✅ Validación completa de datos (commit f08883b)
+- ✅ Autocompletado de datos del usuario
+- ✅ Un pedido = una factura máximo
+
+#### ✅ RF-05: Carrito de Compras (100% Backend)
+**Archivos clave:**
+- `ServicioCarritoCompras.java` (@SessionScope) - Lógica de negocio
+- `CasoDeUsoAccesoCarrito.java` - Orquestación
+- `ControladorCarrito.java` - HTML (sin templates)
+- `ControladorCarritoREST.java` - API REST completa
+
+**Endpoints REST:**
+- `GET /api/carrito` - Ver carrito + advertencias
+- `POST /api/carrito/agregar` - Agregar producto
+- `POST /api/carrito/modificar` - Modificar cantidad
+- `DELETE /api/carrito/eliminar/{id}` - Eliminar item
+- `DELETE /api/carrito/vaciar` - Vaciar carrito
+- `POST /api/carrito/checkout` - Procesar checkout
+
+**Endpoints HTML:**
+- `GET /carrito` - Vista del carrito
+- `POST /carrito/agregar` - Agregar producto
+- `POST /carrito/editar` - Modificar cantidad
+- `POST /carrito/eliminar` - Eliminar item
+- `POST /carrito/vaciar` - Vaciar carrito
+- ❌ Falta: Template (`carrito.html`)
+- ❌ Falta: Endpoint HTML para checkout
+
+**Características:**
+- ✅ Optimistic Locking (@Version) para concurrencia
+- ✅ Validación de stock en tiempo real
+- ✅ Advertencias cuando stock cambió
+- ✅ Transacciones atómicas en checkout
+- ✅ Calcula subtotal, IVA (19%), total
+- ⚠️ Hardcodea `costoEnvio = 0.0`
+- ⚠️ Sin sistema de descuentos
+
+### Templates HTML/Thymeleaf
+
+**Estado:** 0/8 templates implementados (0%)
+
+```
+src/main/resources/templates/
+├── login.html                    ❌ FALTA
+├── registro-paso1.html           ❌ FALTA
+├── registro-paso2.html           ❌ FALTA
+├── catalogo.html                 ❌ FALTA
+├── carrito.html                  ❌ FALTA
+├── pasarela-pagos.html           ❌ FALTA
+└── facturacion/
+    ├── formulario-factura.html   ❌ FALTA
+    └── detalle-factura.html      ❌ FALTA
+```
+
+**Impacto:** La aplicación solo funciona vía API REST (tests bash), no tiene UI web funcional.
+
+### Controladores Existentes
+
+**Controladores HTML (@Controller):** 5/6 implementados
+- ✅ `ControladorAutenticacion.java` - Login y registro (sin templates)
+- ✅ `ControladorCatalogo.java` - Catálogo (sin templates)
+- ✅ `ControladorCarrito.java` - Carrito (sin templates)
+- ✅ `ControladorFacturacion.java` - Facturación (sin templates)
+- ✅ `ControladorBienvenida.java` - Info de API (GET /)
+- ❌ `ControladorPagos.java` - NO EXISTE
+
+**Controladores REST (@RestController):** 4/5 implementados
+- ✅ `ControladorAutenticacionREST.java` - API de auth completa
+- ✅ `ControladorProductoREST.java` - API de inventario completa
+- ✅ `ControladorCarritoREST.java` - API de carrito completa
+- ✅ `ControladorFacturacionREST.java` - API de facturación completa
+- ❌ `ControladorPagosREST.java` - NO EXISTE
 
 ### Métricas de Código
 
-- **Excepciones personalizadas:** 17 (incluye ConflictoConcurrenciaException)
-- **Servicios (RF):** 4
-- **Casos de Uso:** 9
-- **Controladores HTML:** 3 (Autenticación, Catálogo, Carrito)
-- **Controladores REST:** 4 (Autenticación, Producto, Carrito, Bienvenida)
-- **Tests automatizados:** 37 (RF-03: 5, RF-01: 10, RF-05: 22)
-- **Handlers de excepciones:** 16
+- **Excepciones personalizadas:** 20+ (incluye facturación)
+- **Servicios (RF):** 5 (Inventario, Autenticación, Registro, Carrito, Facturación)
+- **Casos de Uso:** 10
+- **Controladores HTML:** 5 (sin templates)
+- **Controladores REST:** 5 (100% funcionales)
+- **Tests automatizados:** 47/50 pasando (94%)
+  - RF-01: 17 tests ✅
+  - RF-03: 9 tests ✅
+  - RF-04: 6 tests ✅
+  - RF-05: 15 tests ✅
+  - RF-02: 0 tests (no implementado)
+  - Catálogo HTML: 3 tests ❌ (sin templates)
+- **Handlers de excepciones:** 19
 - **Protección contra race conditions:** ✅ Implementada (Optimistic Locking)
-- **Estrategia de vistas:** ✅ Híbrida (Thymeleaf + AJAX)
+- **Estrategia de vistas:** ✅ Híbrida (Thymeleaf + AJAX) - Backend listo, faltan templates
 
 ### Base de Datos
 
 **Tablas principales:**
-- `usuarios` - Credenciales y datos de usuarios
-- `productos` - Catálogo de productos (inventario)
-- `items_carrito` - Items del carrito (relación Usuario-Producto)
+- `usuarios` - Credenciales y datos de usuarios (RF-03)
+- `productos` - Catálogo de productos (RF-01)
+- `items_carrito` - Items del carrito (RF-05)
+- `pedidos` - Pedidos generados en checkout (RF-05, usado por RF-02 y RF-04)
+- `facturas` - Facturas emitidas (RF-04)
+
+**Enums:**
+- `MetodoPago` - 6 opciones (tarjetas, PayPal, efectivo, datáfono)
+- `EstadoPedido` - Estados del pedido (PENDIENTE_PAGO, PAGO_CONFIRMADO, etc.)
+- `RolUsuario` - Roles de usuario (CLIENTE, ADMINISTRADOR_VENTAS)
+
+### Inconsistencias y Problemas Conocidos
+
+#### 🔴 CRÍTICO: RF-02 (Pasarela de Pagos) Ausente
+
+**Problema:** `ServicioCarritoCompras.procesarCheckout()` asume pago confirmado sin validar.
+
+```java
+// ServicioCarritoCompras.java:189-193
+pedido.setEstadoPedido(EstadoPedido.PAGO_CONFIRMADO);  // ❌ Sin validar pago
+pedido.setMetodoPago(MetodoPago.TARJETA_CREDITO_EN_LINEA);  // ❌ Hardcoded
+```
+
+**Impacto:**
+- Stock se reduce sin confirmar pago real
+- No hay forma de elegir método de pago
+- Flujo de negocio incompleto
+
+**Solución recomendada:**
+1. Separar checkout en 2 pasos:
+   - `crearPedidoPendiente()` - Sin reducir stock
+   - `confirmarPagoPedido()` - Reduce stock solo si pago exitoso
+2. Implementar RF-02 completo (ServicioPagos + casos de uso + controladores)
+
+#### ⚠️ MEDIA: Catálogo Requiere Login
+
+**Wireframe esperado:** Usuario sin login puede VER catálogo (solo lectura)
+
+**Código actual:**
+```java
+// ControladorCatalogo.java:29
+if (usuario == null) {
+    return "redirect:/login";  // ❌ Bloquea acceso público
+}
+```
+
+**Solución:** Permitir `/catalogo` público, requerir login solo al agregar al carrito
+
+#### ⚠️ MEDIA: Costos Hardcodeados
+
+**Problemas:**
+```java
+// ServicioCarritoCompras.java:192
+pedido.setCostoEnvio(0.0);  // ❌ Hardcoded, debería calcularse
+
+// Falta sistema de descuentos:
+// - Sin campo `descuento` en entidad Pedido
+// - Sin servicio de cupones/promociones
+```
+
+**Solución:** Implementar cálculo de envío y sistema de descuentos
+
+### Prioridades de Implementación
+
+#### 🔴 PRIORIDAD CRÍTICA (Bloquea flujo completo)
+1. **RF-02: Pasarela de Pagos (Backend + Frontend)**
+   - `ServicioPagos.java`
+   - `CasoDeUsoProcesarPago.java`
+   - `ControladorPagos.java` + `ControladorPagosREST.java`
+   - Excepciones específicas (PagoRechazadoException, etc.)
+   - Template `pasarela-pagos.html`
+   - Lógica de validación de pago (ficticia por ahora)
+   - Actualización de estado de pedido
+
+#### 🟡 PRIORIDAD ALTA (Necesario para usar la aplicación)
+2. **Templates HTML/Thymeleaf (8 archivos)**
+   - `login.html`, `registro-paso1.html`, `registro-paso2.html`
+   - `catalogo.html`
+   - `carrito.html`
+   - `pasarela-pagos.html`
+   - `formulario-factura.html`, `detalle-factura.html`
+
+#### 🟢 PRIORIDAD MEDIA (Mejoras funcionales)
+3. **Cálculo dinámico de costoEnvio**
+   - Por dirección, peso, distancia
+
+4. **Sistema de descuentos**
+   - Campo `descuento` en `Pedido`
+   - Servicio de cupones/promociones
+
+5. **Catálogo público (sin login)**
+   - Modificar `ControladorCatalogo.java` línea 29
+   - Permitir lectura, requerir login solo para comprar
+
+#### 🔵 PRIORIDAD BAJA (Nice to have)
+6. **Búsqueda/Filtros en catálogo**
+   - `GET /api/productos/buscar?q=...`
+   - Filtros por categoría, precio, etc.
+
+---
+
+## 🗺️ Flujo del Usuario (Según Wireframes)
+
+### Resumen del Flujo Completo
+
+```
+1. Usuario SIN login → Ve catálogo (solo lectura)  ⚠️ Actual: requiere login
+2. Click "Agregar al carrito" → Redirige a login   ✅ Funciona
+3. Login/registro en 2 pasos                        ✅ Backend listo, falta UI
+4. Usuario CON login → Puede agregar al carrito    ✅ Funciona
+5. Ver carrito → Editar cantidades, eliminar items ✅ Backend listo, falta UI
+6. Click "Continuar compra" → Pasarela de pagos    ❌ RF-02 no existe
+7. Elige método pago → Procesa (ficticio)          ❌ RF-02 no existe
+8. Pago exitoso → Pregunta "¿Deseas factura?"      ❌ Lógica no implementada
+9. Si sí → Formulario con datos autocompletados    ✅ Backend listo, falta UI
+10. Genera factura PDF                             ⚠️ Genera registro, falta PDF
+```
+
+### Componentes por Página
+
+#### Página 1: LOGIN
+- ✅ Backend REST: `POST /api/auth/validar-correo`, `POST /api/auth/login`, `POST /api/auth/registrar`
+- ✅ Backend HTML: `GET /login`, `POST /login`, `GET /registro`, etc.
+- ❌ Templates: `login.html`, `registro-paso1.html`, `registro-paso2.html`
+- ⚠️ Diferencia: Wireframe muestra login en 1 paso, código usa 2 pasos para registro
+
+#### Página 2: CATÁLOGO
+- ✅ Backend REST: `GET /api/productos`
+- ✅ Backend HTML: `GET /catalogo`
+- ❌ Template: `catalogo.html`
+- ⚠️ Diferencia: Código actual requiere login, wireframe permite acceso público
+
+#### Página 3: CARRITO
+- ✅ Backend REST: Completo (GET, POST, PUT, DELETE, checkout)
+- ✅ Backend HTML: Completo (GET, POST agregar/editar/eliminar/vaciar)
+- ❌ Template: `carrito.html`
+- ✅ Lógica: Calcula subtotal, IVA (19%), total
+- ⚠️ Diferencias menores:
+  - Wireframe muestra "Número de pedido" antes de checkout
+  - Código genera ID solo después de checkout
+  - Wireframe muestra campo "Descuento", código no lo tiene
+
+#### Página 4: PASARELA DE PAGOS
+- ❌ Backend: Completamente ausente (ServicioPagos, ControladorPagos)
+- ❌ Frontend: No existe
+- ✅ Enum MetodoPago: Ya tiene 6 opciones necesarias
+- ⚠️ Problema: Checkout actual asume pago confirmado sin validar
+
+#### Página 5: FACTURACIÓN
+- ✅ Backend REST: Completo (`POST /api/factura/generar`, `GET /api/factura/{id}`, etc.)
+- ✅ Backend HTML: Completo (`GET /factura/formulario/{idPedido}`, etc.)
+- ❌ Templates: `formulario-factura.html`, `detalle-factura.html`
+- ✅ Validación: Campos obligatorios (NIT, razón social, dirección, etc.)
+- ✅ Autocompletado: Datos del usuario como fallback
+- ⚠️ Falta: Generación de PDF (solo crea registro en BD)
 
 ---
 
@@ -1279,10 +1618,16 @@ git push -u origin claude/nombre-feature-sessionId
 2. **Servicios (RF):** `web/servicios/requisitos/funcionales/Servicio*.java` ← Columna vertebral
 3. **Excepciones:** Específicas + `@ControllerAdvice` en `ManejadorGlobalExcepciones.java`
 4. **Convenciones:** Español, max 2 indentaciones, max 5 líneas de comentarios, `throws` > `try-catch`
-5. **Testing:** `./test-requisitos-funcionales.sh` - 28 tests, 100% agnóstico
-6. **RF Implementados:** RF-01 (Inventario), RF-03 (Login), RF-05 (Carrito)
+5. **Testing:** `./test-requisitos-funcionales.sh` - 47/50 tests pasando (94%)
+6. **RF Implementados (Backend):** 4/5 completos - RF-01, RF-03, RF-04, RF-05
+7. **RF-02 (Pasarela de Pagos):** ❌ COMPLETAMENTE AUSENTE (prioridad crítica)
+8. **Templates HTML:** 0/8 implementados - Backend completo, falta UI
+
+**Estado:** Backend API REST funcional (80%), Frontend web no funcional (0%)
 
 **Archivo más importante:** `ManejadorGlobalExcepciones.java` - maneja TODAS las excepciones.
+
+**Prioridad #1:** Implementar RF-02 (Pasarela de Pagos) - bloquea flujo completo del usuario.
 
 ---
 
