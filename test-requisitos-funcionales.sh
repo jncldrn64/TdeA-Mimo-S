@@ -7,6 +7,7 @@
 #   RF-03: Login/Registro de Usuarios
 #   RF-01: Registro de Inventario (como ADMINISTRADOR_VENTAS)
 #   RF-05: Carrito de Compras
+#   RF-02: Pasarela de Pagos (Validación ficticia)
 #   RF-04: Facturación
 #
 # Simula el flujo completo de un usuario desde el inicio hasta la facturación.
@@ -898,6 +899,341 @@ test_rf05_checkout() {
     fi
 }
 
+# ==================== RF-02: PASARELA DE PAGOS ====================
+
+test_rf02_pagos() {
+    print_section "RF-02: PASARELA DE PAGOS (VALIDACIÓN FICTICIA)"
+
+    echo -e "${MAGENTA}NOTA: RF-02 usa validación ficticia con tarjetas de prueba hardcoded.${NC}"
+    echo -e "${MAGENTA}      Tarjetas válidas: 4111111111111111 (Visa), 5500000000000004 (Mastercard)${NC}"
+    echo ""
+
+    # Preparar carrito y checkout para obtener pedido PENDIENTE_PAGO
+    log_request "POST" "/api/carrito/agregar (preparar para pago)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO_1&cantidad=2" 2>&1)
+    log_response "$RESPONSE"
+
+    log_request "POST" "/api/carrito/checkout (generar pedido para pago)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    ID_PEDIDO=$(extraer_valor "$RESPONSE" "idPedido")
+
+    if [ -z "$ID_PEDIDO" ] || [ "$ID_PEDIDO" = "null" ]; then
+        echo -e "${RED}✗ No se pudo generar pedido para tests de pagos${NC}"
+        log_error "No se generó pedido, saltando tests de pasarela"
+        return 1
+    fi
+
+    echo -e "${BLUE}→ Pedido para pago: ID $ID_PEDIDO (estado: PENDIENTE_PAGO)${NC}"
+    log_info "Pedido para pago: $ID_PEDIDO"
+
+    # Test 38: Pago con tarjeta Visa válida
+    log_request "POST" "/api/pago/procesar (Visa válida)"
+    RESPONSE=$(curl -s -X POST "$BASE_URL/pago/procesar" \
+        -d "idPedido=$ID_PEDIDO" \
+        -d "metodoPago=TARJETA_DEBITO_EN_LINEA" \
+        -d "numeroTarjeta=4111111111111111" \
+        -d "fechaExpiracion=12/25" \
+        -d "codigoCVV=123" \
+        -d "nombreTitular=Cliente Prueba" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q '"success":true\|PAGO_CONFIRMADO'; then
+        check_result 0 "Pago procesado con Visa (4111111111111111) - Aprobado"
+    else
+        check_result 1 "Pago con Visa" "No se procesó correctamente"
+    fi
+
+    # Test 39: Consultar estado de pago
+    log_request "GET" "/api/pago/estado/$ID_PEDIDO"
+    RESPONSE=$(curl -s "$BASE_URL/pago/estado/$ID_PEDIDO" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q 'PAGO_CONFIRMADO'; then
+        check_result 0 "Consultar estado de pago (PAGO_CONFIRMADO)"
+    else
+        check_result 1 "Consultar estado de pago"
+    fi
+
+    # Test 40: Intentar doble pago del mismo pedido
+    log_request "POST" "/api/pago/procesar (doble pago)"
+    RESPONSE=$(curl -s -X POST "$BASE_URL/pago/procesar" \
+        -d "idPedido=$ID_PEDIDO" \
+        -d "metodoPago=TARJETA_CREDITO_EN_LINEA" \
+        -d "numeroTarjeta=5500000000000004" \
+        -d "fechaExpiracion=12/26" \
+        -d "codigoCVV=456" \
+        -d "nombreTitular=Cliente Prueba" 2>&1)
+    log_response "$RESPONSE"
+
+    if echo "$RESPONSE" | grep -q 'PedidoYaPagadoException\|ya.*pagado\|already paid'; then
+        check_result 0 "Rechazo de doble pago (PedidoYaPagadoException)"
+    else
+        check_result 1 "Rechazo de doble pago"
+    fi
+
+    # Crear nuevo pedido para test de Mastercard
+    log_request "POST" "/api/carrito/agregar (para Mastercard)"
+    curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO_2&cantidad=1" >> "$LOG_FILE" 2>&1
+
+    log_request "POST" "/api/carrito/checkout (pedido para Mastercard)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    ID_PEDIDO_2=$(extraer_valor "$RESPONSE" "idPedido")
+
+    if [ -n "$ID_PEDIDO_2" ] && [ "$ID_PEDIDO_2" != "null" ]; then
+        # Test 41: Pago con tarjeta Mastercard válida
+        log_request "POST" "/api/pago/procesar (Mastercard válida)"
+        RESPONSE=$(curl -s -X POST "$BASE_URL/pago/procesar" \
+            -d "idPedido=$ID_PEDIDO_2" \
+            -d "metodoPago=TARJETA_CREDITO_EN_LINEA" \
+            -d "numeroTarjeta=5500000000000004" \
+            -d "fechaExpiracion=12/26" \
+            -d "codigoCVV=456" \
+            -d "nombreTitular=Cliente Prueba" 2>&1)
+        log_response "$RESPONSE"
+
+        if echo "$RESPONSE" | grep -q '"success":true\|PAGO_CONFIRMADO'; then
+            check_result 0 "Pago procesado con Mastercard (5500000000000004) - Aprobado"
+        else
+            check_result 1 "Pago con Mastercard"
+        fi
+    fi
+
+    # Crear nuevo pedido para test de tarjeta rechazada
+    log_request "POST" "/api/carrito/agregar (para tarjeta rechazada)"
+    curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO_1&cantidad=1" >> "$LOG_FILE" 2>&1
+
+    log_request "POST" "/api/carrito/checkout (pedido para tarjeta rechazada)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    ID_PEDIDO_3=$(extraer_valor "$RESPONSE" "idPedido")
+
+    if [ -n "$ID_PEDIDO_3" ] && [ "$ID_PEDIDO_3" != "null" ]; then
+        # Test 42: Tarjeta rechazada (número no válido)
+        log_request "POST" "/api/pago/procesar (tarjeta rechazada)"
+        RESPONSE=$(curl -s -X POST "$BASE_URL/pago/procesar" \
+            -d "idPedido=$ID_PEDIDO_3" \
+            -d "metodoPago=TARJETA_CREDITO_EN_LINEA" \
+            -d "numeroTarjeta=9999999999999999" \
+            -d "fechaExpiracion=12/25" \
+            -d "codigoCVV=123" \
+            -d "nombreTitular=Cliente Prueba" 2>&1)
+        log_response "$RESPONSE"
+
+        if echo "$RESPONSE" | grep -q 'PagoRechazadoException\|rechazad'; then
+            check_result 0 "Rechazo de tarjeta no válida (9999999999999999)"
+        else
+            check_result 1 "Rechazo de tarjeta inválida"
+        fi
+    fi
+
+    # Crear nuevo pedido para validaciones de formato
+    log_request "POST" "/api/carrito/agregar (para validaciones)"
+    curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO_1&cantidad=1" >> "$LOG_FILE" 2>&1
+
+    log_request "POST" "/api/carrito/checkout (pedido para validaciones)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    ID_PEDIDO_4=$(extraer_valor "$RESPONSE" "idPedido")
+
+    if [ -n "$ID_PEDIDO_4" ] && [ "$ID_PEDIDO_4" != "null" ]; then
+        # Test 43: Validación de CVV inválido
+        log_request "POST" "/api/pago/procesar (CVV inválido)"
+        RESPONSE=$(curl -s -X POST "$BASE_URL/pago/procesar" \
+            -d "idPedido=$ID_PEDIDO_4" \
+            -d "metodoPago=TARJETA_CREDITO_EN_LINEA" \
+            -d "numeroTarjeta=4111111111111111" \
+            -d "fechaExpiracion=12/25" \
+            -d "codigoCVV=12" \
+            -d "nombreTitular=Cliente Prueba" 2>&1)
+        log_response "$RESPONSE"
+
+        if echo "$RESPONSE" | grep -q 'DatosTarjetaInvalidosException\|CVV'; then
+            check_result 0 "Rechazo de CVV inválido (2 dígitos)"
+        else
+            check_result 1 "Rechazo de CVV inválido"
+        fi
+    fi
+
+    # Crear nuevo pedido para fecha vencida
+    log_request "POST" "/api/carrito/agregar (para fecha vencida)"
+    curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO_1&cantidad=1" >> "$LOG_FILE" 2>&1
+
+    log_request "POST" "/api/carrito/checkout (pedido para fecha vencida)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    ID_PEDIDO_5=$(extraer_valor "$RESPONSE" "idPedido")
+
+    if [ -n "$ID_PEDIDO_5" ] && [ "$ID_PEDIDO_5" != "null" ]; then
+        # Test 44: Validación de fecha vencida
+        log_request "POST" "/api/pago/procesar (fecha vencida)"
+        RESPONSE=$(curl -s -X POST "$BASE_URL/pago/procesar" \
+            -d "idPedido=$ID_PEDIDO_5" \
+            -d "metodoPago=TARJETA_CREDITO_EN_LINEA" \
+            -d "numeroTarjeta=4111111111111111" \
+            -d "fechaExpiracion=01/20" \
+            -d "codigoCVV=123" \
+            -d "nombreTitular=Cliente Prueba" 2>&1)
+        log_response "$RESPONSE"
+
+        if echo "$RESPONSE" | grep -q 'DatosTarjetaInvalidosException\|vencid\|expirad'; then
+            check_result 0 "Rechazo de tarjeta vencida (01/20)"
+        else
+            check_result 1 "Rechazo de tarjeta vencida"
+        fi
+    fi
+
+    # Crear nuevo pedido para efectivo contra entrega
+    log_request "POST" "/api/carrito/agregar (para efectivo)"
+    curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO_1&cantidad=1" >> "$LOG_FILE" 2>&1
+
+    log_request "POST" "/api/carrito/checkout (pedido para efectivo)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    ID_PEDIDO_6=$(extraer_valor "$RESPONSE" "idPedido")
+
+    if [ -n "$ID_PEDIDO_6" ] && [ "$ID_PEDIDO_6" != "null" ]; then
+        # Test 45: Efectivo contra entrega (genera código de 6 dígitos)
+        log_request "POST" "/api/pago/procesar (efectivo contra entrega)"
+        RESPONSE=$(curl -s -X POST "$BASE_URL/pago/procesar" \
+            -d "idPedido=$ID_PEDIDO_6" \
+            -d "metodoPago=EFECTIVO_CONTRA_ENTREGA" \
+            -d "direccionEntrega=Calle Ejemplo 123" \
+            -d "telefonoContacto=3001234567" 2>&1)
+        log_response "$RESPONSE"
+
+        if echo "$RESPONSE" | grep -q '"success":true\|codigo.*confirmacion\|[0-9]\{6\}'; then
+            check_result 0 "Pago efectivo contra entrega - Código de 6 dígitos generado"
+
+            # Extraer código para verificar en logs
+            CODIGO=$(echo "$RESPONSE" | grep -o '[0-9]\{6\}' | head -n1)
+            if [ -n "$CODIGO" ]; then
+                echo -e "${BLUE}→ Código generado: $CODIGO (revisar en console logs)${NC}"
+                log_info "Código efectivo: $CODIGO"
+            fi
+        else
+            check_result 1 "Pago efectivo contra entrega"
+        fi
+    fi
+
+    # Crear nuevo pedido para datáfono contra entrega
+    log_request "POST" "/api/carrito/agregar (para datáfono)"
+    curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO_1&cantidad=1" >> "$LOG_FILE" 2>&1
+
+    log_request "POST" "/api/carrito/checkout (pedido para datáfono)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    ID_PEDIDO_7=$(extraer_valor "$RESPONSE" "idPedido")
+
+    if [ -n "$ID_PEDIDO_7" ] && [ "$ID_PEDIDO_7" != "null" ]; then
+        # Test 46: Datáfono contra entrega (genera código de 6 dígitos)
+        log_request "POST" "/api/pago/procesar (datáfono contra entrega)"
+        RESPONSE=$(curl -s -X POST "$BASE_URL/pago/procesar" \
+            -d "idPedido=$ID_PEDIDO_7" \
+            -d "metodoPago=DATAFONO_CONTRA_ENTREGA" \
+            -d "direccionEntrega=Calle Ejemplo 456" \
+            -d "telefonoContacto=3009876543" 2>&1)
+        log_response "$RESPONSE"
+
+        if echo "$RESPONSE" | grep -q '"success":true\|codigo.*confirmacion\|[0-9]\{6\}'; then
+            check_result 0 "Pago datáfono contra entrega - Código de 6 dígitos generado"
+
+            # Extraer código para verificar en logs
+            CODIGO=$(echo "$RESPONSE" | grep -o '[0-9]\{6\}' | head -n1)
+            if [ -n "$CODIGO" ]; then
+                echo -e "${BLUE}→ Código generado: $CODIGO (revisar en console logs)${NC}"
+                log_info "Código datáfono: $CODIGO"
+            fi
+        else
+            check_result 1 "Pago datáfono contra entrega"
+        fi
+    fi
+
+    # Crear nuevo pedido para método no soportado
+    log_request "POST" "/api/carrito/agregar (para método no soportado)"
+    curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO_1&cantidad=1" >> "$LOG_FILE" 2>&1
+
+    log_request "POST" "/api/carrito/checkout (pedido para método no soportado)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    ID_PEDIDO_8=$(extraer_valor "$RESPONSE" "idPedido")
+
+    if [ -n "$ID_PEDIDO_8" ] && [ "$ID_PEDIDO_8" != "null" ]; then
+        # Test 47: Método de pago no soportado (TRANSFERENCIA)
+        log_request "POST" "/api/pago/procesar (método no soportado)"
+        RESPONSE=$(curl -s -X POST "$BASE_URL/pago/procesar" \
+            -d "idPedido=$ID_PEDIDO_8" \
+            -d "metodoPago=TRANSFERENCIA_EN_LINEA" 2>&1)
+        log_response "$RESPONSE"
+
+        if echo "$RESPONSE" | grep -q 'MetodoPagoNoSoportadoException\|no.*soportad'; then
+            check_result 0 "Rechazo de método de pago no soportado (TRANSFERENCIA)"
+        else
+            check_result 1 "Rechazo de método no soportado"
+        fi
+    fi
+
+    # Test 48: Validación de formato de tarjeta (15 dígitos)
+    log_request "POST" "/api/carrito/agregar (para formato inválido)"
+    curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/agregar?idProducto=$ID_PRODUCTO_1&cantidad=1" >> "$LOG_FILE" 2>&1
+
+    log_request "POST" "/api/carrito/checkout (pedido para formato inválido)"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        "$BASE_URL/carrito/checkout" 2>&1)
+    log_response "$RESPONSE"
+
+    ID_PEDIDO_9=$(extraer_valor "$RESPONSE" "idPedido")
+
+    if [ -n "$ID_PEDIDO_9" ] && [ "$ID_PEDIDO_9" != "null" ]; then
+        log_request "POST" "/api/pago/procesar (15 dígitos)"
+        RESPONSE=$(curl -s -X POST "$BASE_URL/pago/procesar" \
+            -d "idPedido=$ID_PEDIDO_9" \
+            -d "metodoPago=TARJETA_CREDITO_EN_LINEA" \
+            -d "numeroTarjeta=411111111111111" \
+            -d "fechaExpiracion=12/25" \
+            -d "codigoCVV=123" \
+            -d "nombreTitular=Cliente Prueba" 2>&1)
+        log_response "$RESPONSE"
+
+        if echo "$RESPONSE" | grep -q 'DatosTarjetaInvalidosException\|16.*digit'; then
+            check_result 0 "Rechazo de tarjeta con formato inválido (15 dígitos)"
+        else
+            check_result 1 "Rechazo de formato inválido"
+        fi
+    fi
+
+    echo ""
+    echo -e "${BLUE}→ Verificar códigos de contra entrega en console logs:${NC}"
+    echo -e "${BLUE}  [PAGO CONTRA ENTREGA] Código de confirmación: XXXXXX${NC}"
+    echo ""
+}
+
 # ==================== TESTS DE CONFLICTOS DE STOCK ====================
 
 test_rf05_stock_conflicts() {
@@ -1187,6 +1523,7 @@ print_report() {
     echo "  ✓ RF-03: Login/Registro de Usuarios"
     echo "  ✓ RF-01: Registro de Inventario (ADMINISTRADOR_VENTAS)"
     echo "  ✓ RF-05: Carrito de Compras"
+    echo "  ✓ RF-02: Pasarela de Pagos (Validación Ficticia)"
     echo "  ✓ RF-04: Facturación"
     echo ""
     echo "Finalizado: $(date)"
@@ -1205,6 +1542,7 @@ print_report() {
         echo "  - RF-03: Login/Registro"
         echo "  - RF-01: Inventario"
         echo "  - RF-05: Carrito"
+        echo "  - RF-02: Pasarela de Pagos"
         echo "  - RF-04: Facturación"
         echo ""
         echo "Finalizado: $(date)"
@@ -1259,6 +1597,7 @@ main() {
     test_rf05_carrito_con_sesion
     test_rf05_stock_warnings
     test_rf05_checkout
+    test_rf02_pagos
     test_rf05_stock_conflicts
     test_rf04_facturacion
 
