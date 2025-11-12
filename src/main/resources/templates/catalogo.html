@@ -10,6 +10,18 @@
   
   <!-- CSS Custom de Mimo's -->
   <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+
+  <!-- Estilos para placeholders más claros -->
+  <style>
+    ::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+    input::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+  </style>
 </head>
 <body>
   <div class="contenedor-central">
@@ -24,9 +36,10 @@
           <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
           <span>Soporte</span>
         </a>
-        <a th:href="@{/catalogo}">
-          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
-          <span>Catálogo</span>
+        <!-- Botón Iniciar Sesión - Solo visible si NO hay sesión activa -->
+        <a th:if="${usuario == null}" th:href="@{/login}">
+          <img th:src="@{/img/login-icon.svg}" alt="Iniciar sesión" src="https://via.placeholder.com/32?text=→">
+          <span>Iniciar sesión</span>
         </a>
         <a th:href="@{/carrito}">
           <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
