@@ -19,20 +19,23 @@
         <!-- 
           NOTA: Coloca tu logo aquí
           Ubicación sugerida: src/main/resources/static/img/logo-mimos.png
-          Dimensiones recomendadas: 150px altura, ancho proporcional
+          Dimensiones recomendadas: 100px altura, ancho proporcional
         -->
-        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x130?text=LOGO+MIMOS">
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
       </a>
       <div id="barra-superior">
         <a th:href="@{/catalogo}">
           <!-- ICONOS SVG - Coloca tus propios iconos aquí -->
-          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/40?text=Soporte">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
         </a>
         <a th:href="@{/catalogo}">
-          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/40?text=Catálogo">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
         </a>
         <a th:href="@{/carrito}">
-          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/40?text=Carrito">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
+          <span>Carrito</span>
         </a>
       </div>
     </header>
