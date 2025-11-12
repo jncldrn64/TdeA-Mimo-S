@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo | Helados Mimo's</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER -->
+    <header>
+      <a th:href="@{/catalogo}">
+        <!-- NOTA: Logo Mimo's -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a href="#">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
+        </a>
+        <a th:href="@{/carrito}">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
+          <span>Carrito</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- BARRA DE BÚSQUEDA Y VISTAS -->
+    <div class="barra-busqueda">
+      <input 
+        type="search" 
+        class="form-control input-busqueda" 
+        placeholder="Buscar productos..."
+        id="buscarProducto">
+      
+      <div class="controles-vista">
+        <!-- Botón Menú -->
+        <button class="btn btn-vista" id="btnMenu">
+          <!-- NOTA: Ícono de menú - reemplaza con tu SVG -->
+          <img th:src="@{/img/menu-icon.svg}" alt="Menú" src="https://via.placeholder.com/24?text=M">
+        </button>
+        
+        <!-- Selector de vista (3 iconos del wireframe) -->
+        <div class="dropdown">
+          <button class="btn btn-vista dropdown-toggle" type="button" id="dropdownVista" data-bs-toggle="dropdown" aria-expanded="false">
+            <!-- NOTA: Ícono de vista - reemplaza con tu SVG -->
+            <img th:src="@{/img/vista-grid-icon.svg}" alt="Vista" src="https://via.placeholder.com/24?text=V">
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="dropdownVista">
+            <li><a class="dropdown-item" href="#" onclick="cambiarVista('grid')">Vista Grid (3 columnas)</a></li>
+            <li><a class="dropdown-item" href="#" onclick="cambiarVista('lista')">Vista Lista</a></li>
+            <li><a class="dropdown-item" href="#" onclick="cambiarVista('compacta')">Vista Compacta</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL: GRID DE PRODUCTOS -->
+    <div class="contenido-catalogo">
+      
+      <!-- Mensaje si no hay productos -->
+      <div th:if="${productos == null || productos.isEmpty()}" class="alert alert-info alert-custom">
+        <p>No hay productos disponibles en este momento.</p>
+      </div>
+
+      <!-- GRID DE PRODUCTOS (3 columnas) -->
+      <div class="productos-grid" id="productosGrid">
+        
+        <!-- Loop Thymeleaf: Itera sobre cada producto -->
+        <div th:each="producto : ${productos}" class="producto-card">
+          
+          <!-- Imagen del producto -->
+          <div class="producto-imagen">
+            <!-- 
+              NOTA: Las imágenes deben estar en src/main/resources/static/img/productos/
+              El campo producto.urlImagen debe contener la ruta relativa
+              Ejemplo: producto.urlImagen = "/img/productos/helado-vainilla.jpg"
+            -->
+            <img 
+              th:src="${producto.urlImagen}" 
+              th:alt="${producto.nombreProducto}"
+              src="https://via.placeholder.com/250x250?text=Helado"
+              class="img-producto">
+            
+            <!-- Badge si está agotado -->
+            <span th:if="${producto.stockDisponible == 0}" class="badge-agotado">Agotado</span>
+          </div>
+
+          <!-- Información del producto -->
+          <div class="producto-info">
+            <h3 class="producto-nombre" th:text="${producto.nombreProducto}">Copa Tentación</h3>
+            
+            <!-- Descripción (opcional, si existe en tu modelo) -->
+            <p class="producto-descripcion" th:text="${producto.descripcion}">Delicioso helado artesanal</p>
+            
+            <!-- Precio -->
+            <p class="producto-precio">
+              Precio: <span th:text="'$' + ${#numbers.formatDecimal(producto.precio, 1, 'POINT', 0, 'COMMA')}">$23,800</span>
+            </p>
+
+            <!-- Stock disponible (opcional, puedes ocultarlo) -->
+            <p class="producto-stock" th:if="${producto.stockDisponible > 0 && producto.stockDisponible <= 10}">
+              <small class="text-warning">Solo quedan <span th:text="${producto.stockDisponible}">5</span> unidades</small>
+            </p>
+          </div>
+
+          <!-- Botón Agregar al Carrito -->
+          <div class="producto-acciones">
+            <form th:action="@{/carrito/agregar}" method="POST" class="form-agregar-carrito">
+              <input type="hidden" name="idProducto" th:value="${producto.idProducto}">
+              <input type="hidden" name="cantidad" value="1">
+              
+              <button 
+                type="submit" 
+                class="btn btn-agregar-carrito"
+                th:disabled="${producto.stockDisponible == 0 || !producto.estaActivo}">
+                <!-- NOTA: Ícono + amarillo - reemplaza con tu SVG -->
+                <img th:src="@{/img/agregar-icon.svg}" alt="Agregar" src="https://via.placeholder.com/30?text=%2B" class="icono-agregar">
+              </button>
+            </form>
+          </div>
+
+        </div>
+        <!-- Fin del loop -->
+
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-links">
+        <a href="#">Convenios</a>
+        <a href="#">Encuéntranos</a>
+        <a href="#">Trabaja con nosotros</a>
+        <a href="#">Contacto</a>
+        <a href="#">Políticas</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- JS mínimo: Búsqueda de productos (opcional) -->
+  <script>
+    // Búsqueda simple en tiempo real (opcional)
+    const inputBuscar = document.getElementById('buscarProducto');
+    const productosGrid = document.querySelectorAll('.producto-card');
+
+    if (inputBuscar) {
+      inputBuscar.addEventListener('input', function(e) {
+        const busqueda = e.target.value.toLowerCase();
+        
+        productosGrid.forEach(card => {
+          const nombre = card.querySelector('.producto-nombre').textContent.toLowerCase();
+          const descripcion = card.querySelector('.producto-descripcion')?.textContent.toLowerCase() || '';
+          
+          if (nombre.includes(busqueda) || descripcion.includes(busqueda)) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    }
+
+    // Cambiar vista (placeholder - puedes implementarlo después)
+    function cambiarVista(tipo) {
+      const grid = document.getElementById('productosGrid');
+      
+      // Remover clases previas
+      grid.classList.remove('productos-grid', 'productos-lista', 'productos-compacta');
+      
+      // Agregar clase según tipo
+      if (tipo === 'grid') {
+        grid.classList.add('productos-grid');
+      } else if (tipo === 'lista') {
+        grid.classList.add('productos-lista');
+      } else if (tipo === 'compacta') {
+        grid.classList.add('productos-compacta');
+      }
+      
+      // Guardar preferencia en localStorage (opcional)
+      localStorage.setItem('vistaPreferida', tipo);
+    }
+
+    // Cargar vista preferida al iniciar (opcional)
+    window.addEventListener('DOMContentLoaded', function() {
+      const vistaGuardada = localStorage.getItem('vistaPreferida');
+      if (vistaGuardada) {
+        cambiarVista(vistaGuardada);
+      }
+    });
+  </script>
+</body>
+</html>
