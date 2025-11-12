@@ -38,27 +38,42 @@
     <!-- CONTENIDO PRINCIPAL -->
     <div class="contenido-registro">
       <h1 class="titulo-registro">Crear cuenta - Paso 1</h1>
-      <p class="subtitulo-registro">Ingresa tu correo electrónico o teléfono para comenzar</p>
+      <p class="subtitulo-registro">Ingresa tu correo y contraseña para comenzar</p>
 
       <!-- Mensaje de error si existe -->
       <div th:if="${error}" class="alert alert-danger alert-custom" role="alert">
         <p th:text="${error}">Error al validar correo</p>
       </div>
 
-      <!-- FORMULARIO PASO 1: Validar correo/teléfono -->
-      <form th:action="@{/registro/validar-correo}" method="POST" class="form-registro">
-        <div class="mb-4">
-          <label for="correoOTelefono" class="form-label label-registro">E-mail o teléfono:</label>
-          <input 
-            type="text" 
-            class="form-control input-registro" 
-            id="correoOTelefono" 
-            name="correoOTelefono" 
-            placeholder="ejemplo@correo.com o 3001234567"
+      <!-- FORMULARIO PASO 1: Validar correo y contraseña inicial -->
+      <form th:action="@{/registro}" method="POST" class="form-registro">
+        <div class="mb-3">
+          <label for="correo" class="form-label label-registro">Correo electrónico <span class="texto-obligatorio">*</span></label>
+          <input
+            type="email"
+            class="form-control input-registro"
+            id="correo"
+            name="correo"
+            placeholder="ejemplo@correo.com"
             required
-            th:value="${correoOTelefono}">
+            th:value="${correo}">
           <div class="form-text texto-ayuda">
-            Usaremos este dato para crear tu cuenta
+            Usaremos este correo para crear tu cuenta
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="contrasena" class="form-label label-registro">Contraseña <span class="texto-obligatorio">*</span></label>
+          <input
+            type="password"
+            class="form-control input-registro"
+            id="contrasena"
+            name="contrasena"
+            placeholder="Mínimo 8 caracteres"
+            minlength="8"
+            required>
+          <div class="form-text texto-ayuda">
+            Debe tener al menos 8 caracteres
           </div>
         </div>
 

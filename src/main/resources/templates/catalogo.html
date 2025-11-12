@@ -130,6 +130,14 @@
             </form>
           </div>
 
+          <!-- Botón Iniciar Sesión - Solo visible si NO hay sesión activa -->
+          <div class="producto-acciones" th:if="${usuario == null}">
+            <a th:href="@{/login}" class="btn btn-agregar-carrito">
+              <!-- NOTA: Ícono de login - reemplaza con tu SVG -->
+              <img th:src="@{/img/login-icon.svg}" alt="Iniciar sesión" src="https://via.placeholder.com/30?text=→" class="icono-agregar">
+            </a>
+          </div>
+
         </div>
         <!-- Fin del loop -->
 

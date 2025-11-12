@@ -42,7 +42,7 @@
 
     <!-- CONTENIDO PRINCIPAL -->
     <div class="contenido-login">
-      <h1 class="titulo-login">Ingresa tu e-mail o teléfono para iniciar sesión</h1>
+      <h1 class="titulo-login">Iniciar sesión</h1>
 
       <!-- Mensaje de error si existe -->
       <div th:if="${error}" class="alert alert-danger alert-custom" role="alert">
@@ -56,19 +56,30 @@
 
       <!-- FORMULARIO DE LOGIN -->
       <form th:action="@{/login}" method="POST" class="form-login">
-        <div class="mb-4">
-          <label for="correoOTelefono" class="form-label label-login">E-mail o teléfono:</label>
-          <input 
-            type="text" 
-            class="form-control input-login" 
-            id="correoOTelefono" 
-            name="correoOTelefono" 
-            placeholder="ejemplo@correo.com o 3001234567"
+        <div class="mb-3">
+          <label for="correo" class="form-label label-login">Correo electrónico:</label>
+          <input
+            type="email"
+            class="form-control input-login"
+            id="correo"
+            name="correo"
+            placeholder="ejemplo@correo.com"
             required
-            th:value="${correoOTelefono}">
+            th:value="${correo}">
         </div>
 
-        <button type="submit" class="btn btn-primary btn-mimo btn-continuar">Continuar</button>
+        <div class="mb-4">
+          <label for="contrasena" class="form-label label-login">Contraseña:</label>
+          <input
+            type="password"
+            class="form-control input-login"
+            id="contrasena"
+            name="contrasena"
+            placeholder="Tu contraseña"
+            required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-mimo btn-continuar">Iniciar sesión</button>
       </form>
 
       <!-- LINK A REGISTRO -->
