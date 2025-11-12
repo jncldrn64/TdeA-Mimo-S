@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro - Paso 1 | Helados Mimo's</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER -->
+    <header>
+      <a th:href="@{/catalogo}">
+        <!-- NOTA: Logo Mimo's -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
+        </a>
+        <a th:href="@{/carrito}">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
+          <span>Carrito</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="contenido-registro">
+      <h1 class="titulo-registro">Crear cuenta - Paso 1</h1>
+      <p class="subtitulo-registro">Ingresa tu correo electrónico o teléfono para comenzar</p>
+
+      <!-- Mensaje de error si existe -->
+      <div th:if="${error}" class="alert alert-danger alert-custom" role="alert">
+        <p th:text="${error}">Error al validar correo</p>
+      </div>
+
+      <!-- FORMULARIO PASO 1: Validar correo/teléfono -->
+      <form th:action="@{/registro/validar-correo}" method="POST" class="form-registro">
+        <div class="mb-4">
+          <label for="correoOTelefono" class="form-label label-registro">E-mail o teléfono:</label>
+          <input 
+            type="text" 
+            class="form-control input-registro" 
+            id="correoOTelefono" 
+            name="correoOTelefono" 
+            placeholder="ejemplo@correo.com o 3001234567"
+            required
+            th:value="${correoOTelefono}">
+          <div class="form-text texto-ayuda">
+            Usaremos este dato para crear tu cuenta
+          </div>
+        </div>
+
+        <div class="botones-registro">
+          <button type="submit" class="btn btn-primary btn-mimo btn-continuar">Continuar</button>
+          <a th:href="@{/login}" class="btn btn-secondary btn-mimo btn-cancelar">Cancelar</a>
+        </div>
+      </form>
+
+      <!-- DIVISOR -->
+      <div class="divisor-o">
+        <hr class="linea-divisor">
+        <span class="texto-o">o</span>
+        <hr class="linea-divisor">
+      </div>
+
+      <!-- YA TIENES CUENTA -->
+      <div class="texto-login">
+        <p>¿Ya tienes cuenta? <a th:href="@{/login}" class="link-login">Inicia sesión aquí</a></p>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-links">
+        <a href="#">Convenios</a>
+        <a href="#">Encuéntranos</a>
+        <a href="#">Trabaja con nosotros</a>
+        <a href="#">Contacto</a>
+        <a href="#">Políticas</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

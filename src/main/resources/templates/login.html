@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión | Helados Mimo's</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER -->
+    <header>
+      <a th:href="@{/catalogo}">
+        <!-- 
+          NOTA: Coloca tu logo aquí
+          Ubicación sugerida: src/main/resources/static/img/logo-mimos.png
+          Dimensiones recomendadas: 100px altura, ancho proporcional
+        -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a th:href="@{/catalogo}">
+          <!-- ICONOS SVG - Coloca tus propios iconos aquí -->
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
+        </a>
+        <a th:href="@{/carrito}">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
+          <span>Carrito</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="contenido-login">
+      <h1 class="titulo-login">Ingresa tu e-mail o teléfono para iniciar sesión</h1>
+
+      <!-- Mensaje de error si existe -->
+      <div th:if="${error}" class="alert alert-danger alert-custom" role="alert">
+        <p th:text="${error}">Error de autenticación</p>
+      </div>
+
+      <!-- Mensaje de éxito si existe (ej: registro completado) -->
+      <div th:if="${mensaje}" class="alert alert-success alert-custom" role="alert">
+        <p th:text="${mensaje}">Operación exitosa</p>
+      </div>
+
+      <!-- FORMULARIO DE LOGIN -->
+      <form th:action="@{/login}" method="POST" class="form-login">
+        <div class="mb-4">
+          <label for="correoOTelefono" class="form-label label-login">E-mail o teléfono:</label>
+          <input 
+            type="text" 
+            class="form-control input-login" 
+            id="correoOTelefono" 
+            name="correoOTelefono" 
+            placeholder="ejemplo@correo.com o 3001234567"
+            required
+            th:value="${correoOTelefono}">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-mimo btn-continuar">Continuar</button>
+      </form>
+
+      <!-- LINK A REGISTRO -->
+      <div class="texto-registro">
+        <a th:href="@{/registro}" class="link-registro">Crear cuenta</a>
+      </div>
+
+      <!-- DIVISOR CON "o" -->
+      <div class="divisor-o">
+        <hr class="linea-divisor">
+        <span class="texto-o">o</span>
+        <hr class="linea-divisor">
+      </div>
+
+      <!-- BOTÓN GOOGLE (solo visual, sin OAuth implementado) -->
+      <div class="boton-google-container">
+        <button type="button" class="btn btn-google" onclick="alert('OAuth de Google no implementado aún')">
+          <!-- NOTA: Ícono de Google - coloca tu SVG aquí -->
+          <img th:src="@{/img/google-icon.svg}" alt="Google" class="google-icon" src="https://via.placeholder.com/24?text=G">
+          Iniciar sesión con Google
+        </button>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-links">
+        <a href="#">Convenios</a>
+        <a href="#">Encuéntranos</a>
+        <a href="#">Trabaja con nosotros</a>
+        <a href="#">Contacto</a>
+        <a href="#">Políticas</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS (opcional, para componentes interactivos) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
