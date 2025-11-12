@@ -99,13 +99,13 @@
           <!-- Información del producto -->
           <div class="producto-info">
             <h3 class="producto-nombre" th:text="${producto.nombreProducto}">Copa Tentación</h3>
-            
+
             <!-- Descripción (opcional, si existe en tu modelo) -->
-            <p class="producto-descripcion" th:text="${producto.descripcion}">Delicioso helado artesanal</p>
-            
+            <p class="producto-descripcion" th:text="${producto.descripcionDetallada}">Delicioso helado artesanal</p>
+
             <!-- Precio -->
             <p class="producto-precio">
-              Precio: <span th:text="'$' + ${#numbers.formatDecimal(producto.precio, 1, 'POINT', 0, 'COMMA')}">$23,800</span>
+              Precio: <span th:text="'$' + ${#numbers.formatDecimal(producto.precioUnitario, 1, 'POINT', 0, 'COMMA')}">$23,800</span>
             </p>
 
             <!-- Stock disponible (opcional, puedes ocultarlo) -->
@@ -114,20 +114,28 @@
             </p>
           </div>
 
-          <!-- Botón Agregar al Carrito -->
-          <div class="producto-acciones">
+          <!-- Botón Agregar al Carrito - Solo visible si hay sesión activa -->
+          <div class="producto-acciones" th:if="${usuario != null}">
             <form th:action="@{/carrito/agregar}" method="POST" class="form-agregar-carrito">
               <input type="hidden" name="idProducto" th:value="${producto.idProducto}">
               <input type="hidden" name="cantidad" value="1">
-              
-              <button 
-                type="submit" 
+
+              <button
+                type="submit"
                 class="btn btn-agregar-carrito"
                 th:disabled="${producto.stockDisponible == 0 || !producto.estaActivo}">
                 <!-- NOTA: Ícono + amarillo - reemplaza con tu SVG -->
                 <img th:src="@{/img/agregar-icon.svg}" alt="Agregar" src="https://via.placeholder.com/30?text=%2B" class="icono-agregar">
               </button>
             </form>
+          </div>
+
+          <!-- Botón Iniciar Sesión - Solo visible si NO hay sesión activa -->
+          <div class="producto-acciones" th:if="${usuario == null}">
+            <a th:href="@{/login}" class="btn btn-agregar-carrito">
+              <!-- NOTA: Ícono de login - reemplaza con tu SVG -->
+              <img th:src="@{/img/login-icon.svg}" alt="Iniciar sesión" src="https://via.placeholder.com/30?text=→" class="icono-agregar">
+            </a>
           </div>
 
         </div>

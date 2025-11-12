@@ -25,17 +25,16 @@ public class ControladorCatalogo {
     @GetMapping("/catalogo")
     public String mostrarCatalogo(Model model, HttpSession session) {
         Usuario usuario = (Usuario) session.getAttribute("usuario");
-
-        if (usuario == null) {
-            return "redirect:/login";
-        }
-
         List<Producto> productos = casoDeUsoConsultar.ejecutarListarActivos();
-        Integer cantidadItems = servicioCarritoCompras.contarTotalDeProductos();
 
-        model.addAttribute("usuario", usuario);
         model.addAttribute("productos", productos);
-        model.addAttribute("cantidadItems", cantidadItems);
+
+        // Solo agregar datos de usuario si hay sesión activa
+        if (usuario != null) {
+            Integer cantidadItems = servicioCarritoCompras.contarTotalDeProductos();
+            model.addAttribute("usuario", usuario);
+            model.addAttribute("cantidadItems", cantidadItems);
+        }
 
         return "catalogo";
     }
