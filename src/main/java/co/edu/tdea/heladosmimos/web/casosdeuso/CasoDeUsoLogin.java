@@ -1,7 +1,7 @@
-package co.edu.tdea.heladosmimos.web.seguridad.casosdeuso;
+package co.edu.tdea.heladosmimos.web.casosdeuso;
 
 import co.edu.tdea.heladosmimos.web.entidades.Usuario;
-import co.edu.tdea.heladosmimos.web.servicios.ServicioAutenticacion;
+import co.edu.tdea.heladosmimos.web.servicios.requisitos.funcionales.ServicioAutenticacion;
 import co.edu.tdea.heladosmimos.web.excepciones.CredencialesInvalidasException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

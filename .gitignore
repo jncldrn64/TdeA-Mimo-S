@@ -31,3 +31,21 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Gradle ###
+.gradle/
+gradle/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### Archivos temporales ###
+*.log
+*.tmp
+*.lock
+*.sh
+!test-requisitos-funcionales.sh
+
+### Archivos de sistema ###
+.DS_Store
+Thumbs.db
