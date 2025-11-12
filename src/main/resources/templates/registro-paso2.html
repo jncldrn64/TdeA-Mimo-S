@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro - Paso 2 | Helados Mimo's</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER -->
+    <header>
+      <a th:href="@{/catalogo}">
+        <!-- NOTA: Logo Mimo's -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x130?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/40?text=Soporte">
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/40?text=Catálogo">
+        </a>
+        <a th:href="@{/carrito}">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/40?text=Carrito">
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="contenido-registro">
+      <h1 class="titulo-registro">Crear cuenta - Paso 2</h1>
+      <p class="subtitulo-registro">Completa tus datos personales</p>
+
+      <!-- Mensaje de error si existe -->
+      <div th:if="${error}" class="alert alert-danger alert-custom" role="alert">
+        <p th:text="${error}">Error al crear la cuenta</p>
+      </div>
+
+      <!-- FORMULARIO PASO 2: Datos completos -->
+      <form th:action="@{/registro/completar}" method="POST" class="form-registro">
+        
+        <!-- Campo oculto con el correo/teléfono validado en paso 1 -->
+        <input type="hidden" name="correoOTelefono" th:value="${correoOTelefono}">
+
+        <!-- NOMBRE COMPLETO -->
+        <div class="mb-3">
+          <label for="nombreCompleto" class="form-label label-registro">Nombre completo <span class="texto-obligatorio">*</span></label>
+          <input 
+            type="text" 
+            class="form-control input-registro" 
+            id="nombreCompleto" 
+            name="nombreCompleto" 
+            placeholder="Juan Pérez García"
+            required
+            th:value="${nombreCompleto}">
+        </div>
+
+        <!-- CONTRASEÑA -->
+        <div class="mb-3">
+          <label for="contrasena" class="form-label label-registro">Contraseña <span class="texto-obligatorio">*</span></label>
+          <input 
+            type="password" 
+            class="form-control input-registro" 
+            id="contrasena" 
+            name="contrasena" 
+            placeholder="Mínimo 8 caracteres"
+            minlength="8"
+            required>
+          <div class="form-text texto-ayuda">
+            Debe tener al menos 8 caracteres
+          </div>
+        </div>
+
+        <!-- CONFIRMAR CONTRASEÑA -->
+        <div class="mb-3">
+          <label for="confirmarContrasena" class="form-label label-registro">Confirmar contraseña <span class="texto-obligatorio">*</span></label>
+          <input 
+            type="password" 
+            class="form-control input-registro" 
+            id="confirmarContrasena" 
+            name="confirmarContrasena" 
+            placeholder="Repite tu contraseña"
+            minlength="8"
+            required>
+        </div>
+
+        <!-- TELÉFONO (si no fue usado en paso 1) -->
+        <div class="mb-3">
+          <label for="telefono" class="form-label label-registro">Teléfono</label>
+          <input 
+            type="tel" 
+            class="form-control input-registro" 
+            id="telefono" 
+            name="telefono" 
+            placeholder="3001234567"
+            th:value="${telefono}">
+          <div class="form-text texto-ayuda">
+            Opcional - Para notificaciones de tu pedido
+          </div>
+        </div>
+
+        <!-- DIRECCIÓN -->
+        <div class="mb-3">
+          <label for="direccion" class="form-label label-registro">Dirección de envío</label>
+          <input 
+            type="text" 
+            class="form-control input-registro" 
+            id="direccion" 
+            name="direccion" 
+            placeholder="Calle 123 # 45-67, Apto 801"
+            th:value="${direccion}">
+          <div class="form-text texto-ayuda">
+            Opcional - Puedes agregarla después
+          </div>
+        </div>
+
+        <!-- ROL (hidden, siempre CLIENTE) -->
+        <input type="hidden" name="rol" value="CLIENTE">
+
+        <!-- TÉRMINOS Y CONDICIONES -->
+        <div class="mb-4">
+          <div class="form-check">
+            <input 
+              class="form-check-input" 
+              type="checkbox" 
+              id="aceptarTerminos" 
+              name="aceptarTerminos" 
+              required>
+            <label class="form-check-label label-terminos" for="aceptarTerminos">
+              Acepto los <a href="#" target="_blank">Términos y Condiciones</a> y la <a href="#" target="_blank">Política de Privacidad</a>
+            </label>
+          </div>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="botones-registro">
+          <button type="submit" class="btn btn-primary btn-mimo btn-continuar">Crear cuenta</button>
+          <a th:href="@{/registro}" class="btn btn-secondary btn-mimo btn-cancelar">Volver</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-links">
+        <a href="#">Convenios</a>
+        <a href="#">Encuéntranos</a>
+        <a href="#">Trabaja con nosotros</a>
+        <a href="#">Contacto</a>
+        <a href="#">Políticas</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- JS mínimo: Validar que las contraseñas coincidan -->
+  <script>
+    document.querySelector('.form-registro').addEventListener('submit', function(e) {
+      const contrasena = document.getElementById('contrasena').value;
+      const confirmar = document.getElementById('confirmarContrasena').value;
+      
+      if (contrasena !== confirmar) {
+        e.preventDefault();
+        alert('Las contraseñas no coinciden. Por favor verifica.');
+        document.getElementById('confirmarContrasena').focus();
+      }
+    });
+  </script>
+</body>
+</html>
