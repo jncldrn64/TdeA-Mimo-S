@@ -29,6 +29,9 @@ public class ControladorCarritoREST {
     @Autowired
     private ServicioCarritoCompras servicioCarritoCompras;
 
+    @Autowired
+    private co.edu.tdea.heladosmimos.web.puertos.RepositorioUsuario repositorioUsuario;
+
     @GetMapping
     public ResponseEntity<?> obtenerCarrito() {
         List<ItemCarrito> items = casoDeUsoAccesoCarrito.ejecutarObtenerCarrito();
@@ -171,6 +174,13 @@ public class ControladorCarritoREST {
             error.put("success", false);
             error.put("error", "Usuario no autenticado");
             return ResponseEntity.status(401).body(error);
+        }
+
+        // Recargar usuario desde BD para obtener datos más recientes (incluyendo datos de envío)
+        Usuario usuarioDB = repositorioUsuario.buscarPorId(usuario.getIdUsuario());
+        if (usuarioDB != null) {
+            usuario = usuarioDB;
+            sesion.setAttribute("usuario", usuario); // Actualizar sesión
         }
 
         // Validar si tiene datos de envío completos
