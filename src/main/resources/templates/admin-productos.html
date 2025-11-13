@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración - Productos | Helados Mimo's</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+
+  <style>
+    .admin-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+    }
+
+    .admin-header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .btn-admin {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      transition: transform 0.2s;
+    }
+
+    .btn-admin:hover {
+      transform: translateY(-2px);
+      color: white;
+    }
+
+    .producto-card-admin {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .producto-imagen-admin {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .producto-info-admin {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .producto-nombre-admin {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+
+    .producto-precio-admin {
+      font-size: 1.1rem;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .producto-stock-admin {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .producto-acciones-admin {
+      display: flex;
+      gap: 0.5rem;
+      flex-direction: column;
+    }
+
+    .modal-form {
+      padding: 1rem;
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .badge-activo {
+      background: #28a745;
+      color: white;
+      padding: 0.3rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+    }
+
+    .badge-inactivo {
+      background: #dc3545;
+      color: white;
+      padding: 0.3rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header Admin -->
+  <div class="admin-header">
+    <div class="admin-container">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1>Panel de Administración</h1>
+          <p class="mb-0">Gestión de Productos - Helados Mimo's</p>
+        </div>
+        <div>
+          <span class="me-3">Administrador: <span th:text="${usuario.nombre + ' ' + usuario.apellido}">Admin</span></span>
+          <a th:href="@{/logout}" class="btn btn-light btn-sm">Cerrar Sesión</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido Principal -->
+  <div class="admin-container">
+
+    <!-- Botón para crear nuevo producto -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Productos (<span th:text="${productos.size()}">0</span>)</h2>
+      <button class="btn btn-admin" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto">
+        + Nuevo Producto
+      </button>
+    </div>
+
+    <!-- Mensaje si no hay productos -->
+    <div th:if="${productos == null || productos.isEmpty()}" class="alert alert-info">
+      No hay productos registrados. Crea el primer producto usando el botón de arriba.
+    </div>
+
+    <!-- Lista de productos -->
+    <div th:unless="${productos == null || productos.isEmpty()}">
+      <div th:each="producto : ${productos}" class="producto-card-admin">
+
+        <!-- Imagen -->
+        <img
+          th:src="${producto.urlImagen}"
+          th:alt="${producto.nombreProducto}"
+          src="https://via.placeholder.com/100"
+          class="producto-imagen-admin">
+
+        <!-- Información -->
+        <div class="producto-info-admin">
+          <h3 class="producto-nombre-admin" th:text="${producto.nombreProducto}">Producto</h3>
+          <p class="producto-precio-admin">
+            $<span th:text="${#numbers.formatDecimal(producto.precioUnitario, 1, 'POINT', 0, 'COMMA')}">0</span>
+          </p>
+          <p class="producto-stock-admin mb-0">
+            Stock: <strong th:text="${producto.stockDisponible}">0</strong> unidades
+            <span th:if="${producto.estaActivo}" class="badge-activo ms-2">Activo</span>
+            <span th:unless="${producto.estaActivo}" class="badge-inactivo ms-2">Inactivo</span>
+          </p>
+        </div>
+
+        <!-- Acciones -->
+        <div class="producto-acciones-admin">
+          <button
+            class="btn btn-sm btn-primary"
+            onclick="editarProducto(this)"
+            th:attr="data-id=${producto.idProducto},
+                    data-nombre=${producto.nombreProducto},
+                    data-descripcion=${producto.descripcionDetallada},
+                    data-precio=${producto.precioUnitario},
+                    data-stock=${producto.stockDisponible},
+                    data-imagen=${producto.urlImagen},
+                    data-activo=${producto.estaActivo}">
+            Editar
+          </button>
+          <button
+            class="btn btn-sm btn-danger"
+            onclick="eliminarProducto([[${producto.idProducto}]], '[[${producto.nombreProducto}]]')">
+            Eliminar
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal Nuevo Producto -->
+  <div class="modal fade" id="modalNuevoProducto" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nuevo Producto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body modal-form">
+          <form id="formNuevoProducto">
+            <div class="mb-3">
+              <label class="form-label">Nombre del Producto *</label>
+              <input type="text" class="form-control" id="nuevoNombre" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Descripción</label>
+              <textarea class="form-control" id="nuevoDescripcion" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Precio Unitario ($) *</label>
+              <input type="number" class="form-control" id="nuevoPrecio" step="0.01" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Stock Disponible *</label>
+              <input type="number" class="form-control" id="nuevoStock" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">URL de la Imagen</label>
+              <input type="text" class="form-control" id="nuevoImagen" placeholder="/img/productos/ejemplo.jpg">
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="nuevoActivo" checked>
+              <label class="form-check-label" for="nuevoActivo">Producto activo</label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-admin" onclick="crearProducto()">Crear Producto</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Producto -->
+  <div class="modal fade" id="modalEditarProducto" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Producto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body modal-form">
+          <form id="formEditarProducto">
+            <input type="hidden" id="editarId">
+            <div class="mb-3">
+              <label class="form-label">Nombre del Producto *</label>
+              <input type="text" class="form-control" id="editarNombre" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Descripción</label>
+              <textarea class="form-control" id="editarDescripcion" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Precio Unitario ($) *</label>
+              <input type="number" class="form-control" id="editarPrecio" step="0.01" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Stock Disponible *</label>
+              <input type="number" class="form-control" id="editarStock" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">URL de la Imagen</label>
+              <input type="text" class="form-control" id="editarImagen">
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="editarActivo">
+              <label class="form-check-label" for="editarActivo">Producto activo</label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-admin" onclick="actualizarProducto()">Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- JavaScript para CRUD -->
+  <script>
+    // Crear nuevo producto
+    function crearProducto() {
+      const producto = {
+        nombreProducto: document.getElementById('nuevoNombre').value,
+        descripcionDetallada: document.getElementById('nuevoDescripcion').value,
+        precioUnitario: parseFloat(document.getElementById('nuevoPrecio').value),
+        stockDisponible: parseInt(document.getElementById('nuevoStock').value),
+        urlImagen: document.getElementById('nuevoImagen').value || '/img/productos/default.jpg',
+        estaActivo: document.getElementById('nuevoActivo').checked
+      };
+
+      fetch('/admin/api/productos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(producto)
+      })
+      .then(response => {
+        if (response.ok) {
+          alert('Producto creado exitosamente');
+          location.reload();
+        } else {
+          alert('Error al crear el producto');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear el producto');
+      });
+    }
+
+    // Abrir modal de edición con datos
+    function editarProducto(button) {
+      document.getElementById('editarId').value = button.dataset.id;
+      document.getElementById('editarNombre').value = button.dataset.nombre;
+      document.getElementById('editarDescripcion').value = button.dataset.descripcion;
+      document.getElementById('editarPrecio').value = button.dataset.precio;
+      document.getElementById('editarStock').value = button.dataset.stock;
+      document.getElementById('editarImagen').value = button.dataset.imagen;
+      document.getElementById('editarActivo').checked = button.dataset.activo === 'true';
+
+      const modal = new bootstrap.Modal(document.getElementById('modalEditarProducto'));
+      modal.show();
+    }
+
+    // Actualizar producto
+    function actualizarProducto() {
+      const id = document.getElementById('editarId').value;
+      const producto = {
+        nombreProducto: document.getElementById('editarNombre').value,
+        descripcionDetallada: document.getElementById('editarDescripcion').value,
+        precioUnitario: parseFloat(document.getElementById('editarPrecio').value),
+        stockDisponible: parseInt(document.getElementById('editarStock').value),
+        urlImagen: document.getElementById('editarImagen').value,
+        estaActivo: document.getElementById('editarActivo').checked
+      };
+
+      fetch(`/admin/api/productos/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(producto)
+      })
+      .then(response => {
+        if (response.ok) {
+          alert('Producto actualizado exitosamente');
+          location.reload();
+        } else {
+          alert('Error al actualizar el producto');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al actualizar el producto');
+      });
+    }
+
+    // Eliminar producto
+    function eliminarProducto(id, nombre) {
+      if (!confirm(`¿Estás seguro de que deseas eliminar el producto "${nombre}"?`)) {
+        return;
+      }
+
+      fetch(`/admin/api/productos/${id}`, {
+        method: 'DELETE'
+      })
+      .then(response => {
+        if (response.ok) {
+          alert('Producto eliminado exitosamente');
+          location.reload();
+        } else {
+          alert('Error al eliminar el producto');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al eliminar el producto');
+      });
+    }
+  </script>
+</body>
+</html>

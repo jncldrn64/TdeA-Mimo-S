@@ -1,6 +1,7 @@
 package co.edu.tdea.heladosmimos.web.controladores;
 
 import co.edu.tdea.heladosmimos.web.entidades.Usuario;
+import co.edu.tdea.heladosmimos.web.entidades.enums.RolUsuario;
 import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoLogin;
 import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoIniciarRegistro;
 import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoCompletarRegistro;
@@ -46,7 +47,13 @@ public class ControladorAutenticacion {
         try {
             Usuario usuario = casoDeUsoLogin.ejecutar(correo, contrasena);
             sesion.setAttribute("usuario", usuario);
-            return "redirect:/catalogo";
+
+            // Redirigir según el rol del usuario
+            if (usuario.getRol() == RolUsuario.ADMINISTRADOR_VENTAS) {
+                return "redirect:/admin/productos";
+            } else {
+                return "redirect:/catalogo";
+            }
 
         } catch (CredencialesInvalidasException e) {
             modelo.addAttribute("error", e.getMessage());
