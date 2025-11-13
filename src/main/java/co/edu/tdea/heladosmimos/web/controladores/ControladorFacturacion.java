@@ -67,7 +67,7 @@ public class ControladorFacturacion {
     public String verFactura(@PathVariable Long idFactura, Model modelo)
             throws FacturaNoEncontradaException, ProductoNoEncontradoException {
 
-        Factura factura = casoDeUsoConsultarFactura.ejecutarPorPedido(idFactura);
+        Factura factura = casoDeUsoConsultarFactura.ejecutarPorId(idFactura);
 
         Pedido pedido = repositorioPedido.buscarPorId(factura.getIdPedido())
             .orElseThrow(() -> new ProductoNoEncontradoException(

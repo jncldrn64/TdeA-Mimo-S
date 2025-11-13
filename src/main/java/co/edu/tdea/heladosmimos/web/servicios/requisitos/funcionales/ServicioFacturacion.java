@@ -190,6 +190,15 @@ public class ServicioFacturacion {
     }
 
     /**
+     * Obtiene factura por ID de factura.
+     */
+    public Factura obtenerFacturaPorId(Long idFactura) throws FacturaNoEncontradaException {
+        return repositorioFactura.buscarPorId(idFactura)
+            .orElseThrow(() -> new FacturaNoEncontradaException(
+                "No existe factura con ID: " + idFactura));
+    }
+
+    /**
      * Obtiene factura por ID de pedido.
      */
     public Factura obtenerFacturaDePedido(Long idPedido) throws FacturaNoEncontradaException {
