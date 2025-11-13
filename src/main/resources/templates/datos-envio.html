@@ -10,6 +10,22 @@
   
   <!-- CSS Custom de Mimo's -->
   <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+
+  <!-- Estilos para placeholders más claros -->
+  <style>
+    ::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+    input::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+    textarea::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+  </style>
 </head>
 <body>
   <div class="contenedor-central">
@@ -66,15 +82,14 @@
       <!-- FORMULARIO DE DATOS DE ENVÍO -->
       <form th:action="@{/datos-envio/guardar}" method="POST" class="form-datos-envio">
         
-        <!-- NOMBRE COMPLETO (readonly, ya lo tiene) -->
+        <!-- NOMBRE COMPLETO (readonly, solo para mostrar) -->
         <div class="mb-3">
           <label for="nombreCompleto" class="form-label label-datos-envio">Nombre completo</label>
-          <input 
-            type="text" 
-            class="form-control input-datos-envio input-readonly" 
-            id="nombreCompleto" 
-            name="nombreCompleto" 
-            th:value="${usuario.nombreCompleto}"
+          <input
+            type="text"
+            class="form-control input-datos-envio input-readonly"
+            id="nombreCompleto"
+            th:value="${usuario.nombre} + ' ' + ${usuario.apellido}"
             readonly>
           <div class="form-text texto-ayuda">
             Este es el nombre registrado en tu cuenta
