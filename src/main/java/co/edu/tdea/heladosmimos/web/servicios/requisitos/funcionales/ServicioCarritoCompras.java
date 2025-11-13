@@ -249,7 +249,7 @@ public class ServicioCarritoCompras {
             // Calcular subtotal, IVA y total
             // totalCalculado ya es el subtotal (suma de precio * cantidad de cada item)
             Double subtotal = totalCalculado;
-            Double costoEnvio = 0.0; // Sin costo de envío por ahora
+            Double costoEnvio = 5000.0; // Costo de envío ficticio por ahora - debe coincidir con el carrito
             Double descuento = 0.0; // Sin descuentos por ahora
             Double iva = subtotal * 0.19; // IVA 19% Colombia
             Double total = subtotal + iva + costoEnvio;
