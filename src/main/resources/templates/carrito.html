@@ -40,9 +40,9 @@
           <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
           <span>Catálogo</span>
         </a>
-        <a th:href="@{/carrito}">
-          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
-          <span>Carrito</span>
+        <a th:href="@{/datos-envio}">
+          <img th:src="@{/img/envio-icon.svg}" alt="Datos de Envío" src="https://via.placeholder.com/32?text=E">
+          <span>Datos de Envío</span>
         </a>
       </div>
     </header>
@@ -107,25 +107,27 @@
               <label class="form-label">Cantidad:</label>
               <div class="cantidad-controles">
                 <!-- Botón Decrementar (AJAX) -->
-                <button 
-                  class="btn btn-cantidad btn-decrementar" 
-                  th:onclick="'cambiarCantidad(' + ${item.idProducto} + ', -1)'"
+                <button
+                  class="btn btn-cantidad btn-decrementar"
+                  th:data-producto-id="${item.idProducto}"
+                  onclick="cambiarCantidad(this.getAttribute('data-producto-id'), -1)"
                   th:disabled="${item.cantidad <= 1}">
                   −
                 </button>
-                
+
                 <!-- Input de cantidad (readonly, se actualiza con JS) -->
-                <input 
-                  type="number" 
-                  class="form-control input-cantidad" 
+                <input
+                  type="number"
+                  class="form-control input-cantidad"
                   th:id="'cantidad-' + ${item.idProducto}"
                   th:value="${item.cantidad}"
                   readonly>
-                
+
                 <!-- Botón Incrementar (AJAX) -->
-                <button 
-                  class="btn btn-cantidad btn-incrementar" 
-                  th:onclick="'cambiarCantidad(' + ${item.idProducto} + ', 1)'">
+                <button
+                  class="btn btn-cantidad btn-incrementar"
+                  th:data-producto-id="${item.idProducto}"
+                  onclick="cambiarCantidad(this.getAttribute('data-producto-id'), 1)">
                   +
                 </button>
               </div>
@@ -178,8 +180,25 @@
             <div class="linea-resumen">
               <span class="label-resumen">Envío:</span>
               <span class="valor-resumen" id="resumen-envio">
-                $<span th:text="${#numbers.formatDecimal(costoEnvio, 1, 'POINT', 0, 'COMMA')}">5,000.00</span>
+                <span th:if="${costoEnvio != null && costoEnvio > 0}">
+                  $<span th:text="${#numbers.formatDecimal(costoEnvio, 1, 'POINT', 0, 'COMMA')}">5,000.00</span>
+                </span>
+                <span th:if="${costoEnvio == null || costoEnvio == 0}" class="text-muted" style="font-size: 0.85rem;">
+                  A calcular
+                </span>
               </span>
+            </div>
+            <!-- Nota sobre datos de envío -->
+            <div th:if="${costoEnvio == null || costoEnvio == 0}" class="linea-resumen">
+              <small class="text-muted" style="font-size: 0.8rem;">
+                <a th:href="@{/datos-envio}" style="text-decoration: underline;">Complete sus datos de envío</a> para calcular el costo
+              </small>
+            </div>
+            <!-- Link para editar datos de envío si ya están completos -->
+            <div th:if="${costoEnvio != null && costoEnvio > 0}" class="linea-resumen">
+              <small>
+                <a th:href="@{/datos-envio}" style="text-decoration: underline; font-size: 0.85rem;">Editar datos de envío</a>
+              </small>
             </div>
 
             <!-- IVA (19%) -->
@@ -338,10 +357,26 @@
 
     // Procesar checkout (verifica datos de envío y redirige)
     function procesarCheckout() {
+      // Deshabilitar botón para evitar múltiples clicks
+      const btnCheckout = document.querySelector('.btn-checkout');
+      const textoOriginal = btnCheckout.textContent;
+      btnCheckout.disabled = true;
+      btnCheckout.textContent = 'Procesando...';
+
       fetch('/api/carrito/checkout', {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => {
+            throw new Error(err.error || 'Error al procesar checkout');
+          });
+        }
+        return response.json();
+      })
       .then(data => {
         if (data.success) {
           // Si tiene idPedido, ir directo a pasarela
@@ -349,15 +384,22 @@
             window.location.href = '/pasarela/' + data.idPedido;
           }
         } else if (data.requiereDatosEnvio) {
-          // Si necesita completar datos de envío
+          // Si necesita completar datos de envío, redirigir
+          alert('Por favor completa tus datos de envío antes de continuar');
           window.location.href = '/datos-envio';
         } else {
-          alert('Error: ' + data.error);
+          // Restaurar botón si hay error
+          btnCheckout.disabled = false;
+          btnCheckout.textContent = textoOriginal;
+          alert('Error: ' + (data.mensaje || data.error || 'Error desconocido'));
         }
       })
       .catch(error => {
         console.error('Error:', error);
-        alert('Error al procesar checkout');
+        // Restaurar botón
+        btnCheckout.disabled = false;
+        btnCheckout.textContent = textoOriginal;
+        alert('Error al procesar checkout: ' + error.message);
       });
     }
 
@@ -370,25 +412,31 @@
           inputCantidad.value = data.item.cantidad;
         }
 
+        // Actualizar estado del botón decrementar (habilitar/deshabilitar)
+        const btnDecrementar = document.querySelector(`button[data-producto-id="${data.item.idProducto}"].btn-decrementar`);
+        if (btnDecrementar) {
+          btnDecrementar.disabled = data.item.cantidad <= 1;
+        }
+
         // Actualizar subtotal del item
         const subtotalElement = document.getElementById('subtotal-' + data.item.idProducto);
         if (subtotalElement) {
-          subtotalElement.querySelector('span').textContent = 
+          subtotalElement.querySelector('span').textContent =
             '$' + formatearNumero(data.item.subtotal);
         }
       }
 
       // Actualizar resumen
       if (data.resumen) {
-        document.getElementById('resumen-producto').querySelector('span').textContent = 
+        document.getElementById('resumen-producto').querySelector('span').textContent =
           formatearNumero(data.resumen.subtotal);
-        document.getElementById('resumen-envio').querySelector('span').textContent = 
+        document.getElementById('resumen-envio').querySelector('span').textContent =
           formatearNumero(data.resumen.costoEnvio);
-        document.getElementById('resumen-iva').querySelector('span').textContent = 
+        document.getElementById('resumen-iva').querySelector('span').textContent =
           formatearNumero(data.resumen.iva);
-        document.getElementById('resumen-descuento').querySelector('span').textContent = 
+        document.getElementById('resumen-descuento').querySelector('span').textContent =
           formatearNumero(data.resumen.descuento);
-        document.getElementById('resumen-total').querySelector('span').textContent = 
+        document.getElementById('resumen-total').querySelector('span').textContent =
           formatearNumero(data.resumen.total);
       }
     }
