@@ -87,7 +87,7 @@ public class ControladorPagos {
                 idPedido, metodoPago, datosPago);
 
             modelo.addAttribute("resultado", resultado);
-            return "redirect:/pago/confirmacion?idPedido=" + idPedido;
+            return "redirect:/pasarela/confirmacion?idPedido=" + idPedido;
 
         } catch (PedidoYaPagadoException | DatosTarjetaInvalidosException |
                  PagoRechazadoException | MetodoPagoNoSoportadoException |
