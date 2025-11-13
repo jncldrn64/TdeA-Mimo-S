@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generar Factura | Helados Mimo's</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+
+  <!-- Estilos para placeholders más claros -->
+  <style>
+    ::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+    input::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+
+    .contenedor-facturacion {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .titulo-facturacion {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitulo-facturacion {
+      color: #666;
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+
+    .info-pedido {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 2rem;
+      border-left: 4px solid #007bff;
+    }
+
+    .info-pedido h5 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-pedido p {
+      margin: 0.25rem 0;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .form-label-factura {
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 0.4rem;
+    }
+
+    .input-factura {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 0.6rem 0.8rem;
+      font-size: 0.95rem;
+    }
+
+    .input-factura:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+
+    .texto-obligatorio {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    .texto-ayuda {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-top: 0.25rem;
+    }
+
+    .btn-generar-factura {
+      background-color: #28a745;
+      color: white;
+      font-weight: 600;
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: background-color 0.3s;
+    }
+
+    .btn-generar-factura:hover {
+      background-color: #218838;
+    }
+
+    .btn-cancelar {
+      background-color: #6c757d;
+      color: white;
+      font-weight: 600;
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-block;
+      transition: background-color 0.3s;
+    }
+
+    .btn-cancelar:hover {
+      background-color: #5a6268;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER -->
+    <header>
+      <a th:href="@{/catalogo}">
+        <!-- NOTA: Logo Mimo's -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a href="#">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
+        </a>
+        <a th:href="@{/carrito}">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
+          <span>Carrito</span>
+        </a>
+        <a th:href="@{/logout}">
+          <img th:src="@{/img/cuenta-icon.svg}" alt="Cerrar Sesión" src="https://via.placeholder.com/32?text=CS">
+          <span>Cerrar Sesión</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="contenedor-facturacion">
+      <h1 class="titulo-facturacion">Generar Factura</h1>
+      <p class="subtitulo-facturacion">Completa los datos fiscales para generar tu factura electrónica</p>
+
+      <!-- Información del pedido -->
+      <div class="info-pedido">
+        <h5>Información del Pedido</h5>
+        <p><strong>ID Pedido:</strong> <span th:text="${pedido.idPedido}">123</span></p>
+        <p><strong>Subtotal:</strong> $<span th:text="${#numbers.formatDecimal(pedido.subtotal != null ? pedido.subtotal : 0.0, 1, 'COMMA', 2, 'POINT')}">0.00</span></p>
+        <p><strong>IVA (19%):</strong> $<span th:text="${#numbers.formatDecimal(pedido.iva != null ? pedido.iva : 0.0, 1, 'COMMA', 2, 'POINT')}">0.00</span></p>
+        <p><strong>Total:</strong> $<span th:text="${#numbers.formatDecimal(pedido.total != null ? pedido.total : 0.0, 1, 'COMMA', 2, 'POINT')}">0.00</span></p>
+      </div>
+
+      <!-- Formulario de facturación -->
+      <form th:action="@{/factura/generar}" method="POST" th:object="${datosFacturacion}" id="formFacturacion">
+        <input type="hidden" name="idPedido" th:value="${pedido.idPedido}">
+
+        <div class="row">
+          <!-- NIT -->
+          <div class="col-md-6 mb-3">
+            <label for="nit" class="form-label form-label-factura">NIT / Identificación <span class="texto-obligatorio">*</span></label>
+            <input
+              type="text"
+              class="form-control input-factura"
+              id="nit"
+              name="nit"
+              th:field="*{nit}"
+              placeholder="Ej: 900123456-7"
+              required>
+            <div class="texto-ayuda">Número de identificación tributaria o cédula</div>
+          </div>
+
+          <!-- Razón Social -->
+          <div class="col-md-6 mb-3">
+            <label for="razonSocial" class="form-label form-label-factura">Razón Social / Nombre Fiscal <span class="texto-obligatorio">*</span></label>
+            <input
+              type="text"
+              class="form-control input-factura"
+              id="razonSocial"
+              name="razonSocial"
+              th:field="*{razonSocial}"
+              placeholder="Ej: Empresa S.A.S. o Juan Pérez"
+              required>
+          </div>
+        </div>
+
+        <!-- Nombre Completo -->
+        <div class="mb-3">
+          <label for="nombreCompleto" class="form-label form-label-factura">Nombre Completo <span class="texto-obligatorio">*</span></label>
+          <input
+            type="text"
+            class="form-control input-factura"
+            id="nombreCompleto"
+            name="nombreCompleto"
+            th:field="*{nombreCompleto}"
+            placeholder="Nombre de la persona de contacto"
+            required>
+        </div>
+
+        <!-- Dirección Calle -->
+        <div class="mb-3">
+          <label for="direccionCalle" class="form-label form-label-factura">Dirección <span class="texto-obligatorio">*</span></label>
+          <input
+            type="text"
+            class="form-control input-factura"
+            id="direccionCalle"
+            name="direccionCalle"
+            th:field="*{direccionCalle}"
+            placeholder="Ej: Calle 50 # 45-23, Apartamento 301"
+            required>
+        </div>
+
+        <div class="row">
+          <!-- Ciudad -->
+          <div class="col-md-6 mb-3">
+            <label for="ciudad" class="form-label form-label-factura">Ciudad <span class="texto-obligatorio">*</span></label>
+            <input
+              type="text"
+              class="form-control input-factura"
+              id="ciudad"
+              name="ciudad"
+              th:field="*{ciudad}"
+              placeholder="Ej: Medellín"
+              required>
+          </div>
+
+          <!-- Código Postal -->
+          <div class="col-md-6 mb-3">
+            <label for="codigoPostal" class="form-label form-label-factura">Código Postal <span class="texto-obligatorio">*</span></label>
+            <input
+              type="text"
+              class="form-control input-factura"
+              id="codigoPostal"
+              name="codigoPostal"
+              th:field="*{codigoPostal}"
+              placeholder="Ej: 050001"
+              required>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Estado/Departamento -->
+          <div class="col-md-6 mb-3">
+            <label for="estado" class="form-label form-label-factura">Departamento / Estado <span class="texto-obligatorio">*</span></label>
+            <input
+              type="text"
+              class="form-control input-factura"
+              id="estado"
+              name="estado"
+              th:field="*{estado}"
+              placeholder="Ej: Antioquia"
+              required>
+          </div>
+
+          <!-- Teléfono -->
+          <div class="col-md-6 mb-3">
+            <label for="telefono" class="form-label form-label-factura">Teléfono <span class="texto-obligatorio">*</span></label>
+            <input
+              type="tel"
+              class="form-control input-factura"
+              id="telefono"
+              name="telefono"
+              th:field="*{telefono}"
+              placeholder="Ej: 3001234567"
+              pattern="[0-9]{10}"
+              required>
+            <div class="texto-ayuda">10 dígitos sin espacios ni guiones</div>
+          </div>
+        </div>
+
+        <!-- Correo Electrónico -->
+        <div class="mb-4">
+          <label for="correoElectronico" class="form-label form-label-factura">Correo Electrónico <span class="texto-obligatorio">*</span></label>
+          <input
+            type="email"
+            class="form-control input-factura"
+            id="correoElectronico"
+            name="correoElectronico"
+            th:field="*{correoElectronico}"
+            placeholder="correo@ejemplo.com"
+            required>
+          <div class="texto-ayuda">Se enviará una copia de la factura a este correo</div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex justify-content-between align-items-center">
+          <a th:href="@{/catalogo}" class="btn-cancelar">Cancelar</a>
+          <button type="submit" class="btn-generar-factura" id="btnGenerarFactura">
+            Generar Factura
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>&copy; 2025 Helados Mimo's. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Validación del formulario antes de enviar
+    document.getElementById('formFacturacion').addEventListener('submit', function(e) {
+      const telefono = document.getElementById('telefono').value;
+
+      // Validar teléfono (10 dígitos)
+      if (!/^[0-9]{10}$/.test(telefono)) {
+        e.preventDefault();
+        alert('El teléfono debe tener exactamente 10 dígitos');
+        document.getElementById('telefono').focus();
+        return false;
+      }
+
+      // Deshabilitar botón para evitar doble envío
+      document.getElementById('btnGenerarFactura').disabled = true;
+      document.getElementById('btnGenerarFactura').textContent = 'Generando factura...';
+    });
+  </script>
+</body>
+</html>
