@@ -257,12 +257,17 @@
     <!-- FOOTER -->
     <footer>
       <div class="footer-links">
-        <a href="#">Convenios</a>
-        <a href="#">Encuéntranos</a>
-        <a href="#">Trabaja con nosotros</a>
-        <a href="#">Contacto</a>
-        <a href="#">Políticas</a>
+        <a href="https://www.mimos.com.co/wp-content/uploads/2024/05/AVISO-DE-PRIVACIDAD.pdf" target="_blank">Aviso de Privacidad</a>
+        <a href="https://www.mimos.com.co/wp-content/uploads/2025/09/JRJRPR005-M.Proteccion-de-Datos-Personales-V1W.pdf" target="_blank">Protección de Datos</a>
+        <a href="https://www.mimos.com.co/encuentranos/" target="_blank">Encuéntranos</a>
+        <a href="https://www.mimos.com.co/trabaja-con-nosotros/" target="_blank">Trabaja con nosotros</a>
+        <a href="https://www.mimos.com.co/contacto/" target="_blank">Contacto</a>
+        <a href="https://www.mimos.com.co/convenios/" target="_blank">Convenios</a>
       </div>
+      <div class="footer-acciones" th:if="${usuario != null}">
+        <a th:href="@{/logout}" class="btn-cerrar-sesion">Cerrar Sesión</a>
+      </div>
+      <p class="footer-copyright">&copy; Mimos® - 2025. Todos los derechos reservados.</p>
     </footer>
   </div>
 
