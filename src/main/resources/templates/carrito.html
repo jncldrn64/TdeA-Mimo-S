@@ -367,7 +367,8 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        credentials: 'same-origin' // Asegurar que se envíen las cookies de sesión
       })
       .then(response => {
         if (!response.ok) {
