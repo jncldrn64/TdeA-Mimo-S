@@ -20,7 +20,7 @@
         <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
       </a>
       <div id="barra-superior">
-        <a href="#">
+        <a href="#" onclick="alert('Para soporte, contáctenos en: soporte@mimos.com.co o llámanos al: +57 (604) 123-4567'); return false;">
           <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
           <span>Soporte</span>
         </a>
@@ -36,6 +36,10 @@
           <img th:src="@{/img/pedidos-icon.svg}" alt="Mis Pedidos" src="https://via.placeholder.com/32?text=P">
           <span>Mis Pedidos</span>
         </a>
+        <a th:href="@{/logout}">
+          <img th:src="@{/img/cuenta-icon.svg}" alt="Cerrar Sesión" src="https://via.placeholder.com/32?text=CS">
+          <span>Cerrar Sesión</span>
+        </a>
       </div>
     </header>
 
@@ -50,9 +54,8 @@
         <div class="filtros-seguimiento">
           <select class="form-select filtro-estado" id="filtroEstado" onchange="filtrarPedidos()">
             <option value="">Todos los estados</option>
-            <option value="PENDIENTE_PAGO">Pendiente de pago</option>
+            <option value="PAGO_PENDIENTE">Pendiente de pago</option>
             <option value="PAGO_CONFIRMADO">Pago confirmado</option>
-            <option value="EN_PREPARACION">En preparación</option>
             <option value="EN_CAMINO">En camino</option>
             <option value="ENTREGADO">Entregado</option>
             <option value="CANCELADO">Cancelado</option>
@@ -92,17 +95,15 @@
             
             <!-- Badge de estado -->
             <span class="badge-estado"
-                  th:classappend="${pedido.estadoPedido == 'PENDIENTE_PAGO' ? 'badge-pendiente' :
+                  th:classappend="${pedido.estadoPedido == 'PAGO_PENDIENTE' ? 'badge-pendiente' :
                                    pedido.estadoPedido == 'PAGO_CONFIRMADO' ? 'badge-confirmado' :
-                                   pedido.estadoPedido == 'EN_PREPARACION' ? 'badge-preparacion' :
                                    pedido.estadoPedido == 'EN_CAMINO' ? 'badge-camino' :
-                                   pedido.estadoPedido == 'ENTREGADO' ? 'badge-entregado' : 
+                                   pedido.estadoPedido == 'ENTREGADO' ? 'badge-entregado' :
                                    'badge-cancelado'}">
-              <span th:text="${pedido.estadoPedido == 'PENDIENTE_PAGO' ? 'Pendiente de pago' :
+              <span th:text="${pedido.estadoPedido == 'PAGO_PENDIENTE' ? 'Pendiente de pago' :
                               pedido.estadoPedido == 'PAGO_CONFIRMADO' ? 'Pago confirmado' :
-                              pedido.estadoPedido == 'EN_PREPARACION' ? 'En preparación' :
                               pedido.estadoPedido == 'EN_CAMINO' ? 'En camino' :
-                              pedido.estadoPedido == 'ENTREGADO' ? 'Entregado' : 
+                              pedido.estadoPedido == 'ENTREGADO' ? 'Entregado' :
                               'Cancelado'}">Pago confirmado</span>
             </span>
           </div>
@@ -149,36 +150,31 @@
           <!-- Barra de progreso (timeline) -->
           <div class="timeline-pedido">
             <div class="paso-timeline"
-                 th:classappend="${pedido.estadoPedido == 'PAGO_CONFIRMADO' or 
-                                  pedido.estadoPedido == 'EN_PREPARACION' or 
-                                  pedido.estadoPedido == 'EN_CAMINO' or 
+                 th:classappend="${pedido.estadoPedido == 'PAGO_CONFIRMADO' or
+                                  pedido.estadoPedido == 'EN_CAMINO' or
                                   pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' : ''}">
               <div class="icono-paso">✓</div>
               <span class="label-paso">Confirmado</span>
             </div>
 
             <div class="linea-timeline"
-                 th:classappend="${pedido.estadoPedido == 'EN_PREPARACION' or 
-                                  pedido.estadoPedido == 'EN_CAMINO' or 
+                 th:classappend="${pedido.estadoPedido == 'EN_CAMINO' or
                                   pedido.estadoPedido == 'ENTREGADO' ? 'linea-completada' : ''}"></div>
 
             <div class="paso-timeline"
-                 th:classappend="${pedido.estadoPedido == 'EN_PREPARACION' or 
-                                  pedido.estadoPedido == 'EN_CAMINO' or 
-                                  pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' : 
+                 th:classappend="${pedido.estadoPedido == 'EN_CAMINO' or
+                                  pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' :
                                   pedido.estadoPedido == 'PAGO_CONFIRMADO' ? 'paso-activo' : ''}">
               <div class="icono-paso">🍦</div>
               <span class="label-paso">Preparación</span>
             </div>
 
             <div class="linea-timeline"
-                 th:classappend="${pedido.estadoPedido == 'EN_CAMINO' or 
-                                  pedido.estadoPedido == 'ENTREGADO' ? 'linea-completada' : ''}"></div>
+                 th:classappend="${pedido.estadoPedido == 'ENTREGADO' ? 'linea-completada' : ''}"></div>
 
             <div class="paso-timeline"
-                 th:classappend="${pedido.estadoPedido == 'EN_CAMINO' or 
-                                  pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' : 
-                                  pedido.estadoPedido == 'EN_PREPARACION' ? 'paso-activo' : ''}">
+                 th:classappend="${pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' :
+                                  pedido.estadoPedido == 'EN_CAMINO' ? 'paso-activo' : ''}">
               <div class="icono-paso">🚚</div>
               <span class="label-paso">En camino</span>
             </div>
@@ -187,8 +183,7 @@
                  th:classappend="${pedido.estadoPedido == 'ENTREGADO' ? 'linea-completada' : ''}"></div>
 
             <div class="paso-timeline"
-                 th:classappend="${pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' : 
-                                  pedido.estadoPedido == 'EN_CAMINO' ? 'paso-activo' : ''}">
+                 th:classappend="${pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' : ''}">
               <div class="icono-paso">📦</div>
               <span class="label-paso">Entregado</span>
             </div>
@@ -206,7 +201,7 @@
               📄 Factura
             </a>
 
-            <button th:if="${pedido.estadoPedido == 'PENDIENTE_PAGO'}" 
+            <button th:if="${pedido.estadoPedido == 'PAGO_PENDIENTE'}"
                     class="btn btn-sm btn-danger"
                     onclick="cancelarPedido([[${pedido.idPedido}]])">
               Cancelar
@@ -220,12 +215,14 @@
     <!-- FOOTER -->
     <footer>
       <div class="footer-links">
-        <a href="#">Convenios</a>
-        <a href="#">Encuéntranos</a>
-        <a href="#">Trabaja con nosotros</a>
-        <a href="#">Contacto</a>
-        <a href="#">Políticas</a>
+        <a href="https://www.mimos.com.co/wp-content/uploads/2024/05/AVISO-DE-PRIVACIDAD.pdf" target="_blank">Aviso de Privacidad</a>
+        <a href="https://www.mimos.com.co/wp-content/uploads/2025/09/JRJRPR005-M.Proteccion-de-Datos-Personales-V1W.pdf" target="_blank">Protección de Datos</a>
+        <a href="https://www.mimos.com.co/encuentranos/" target="_blank">Encuéntranos</a>
+        <a href="https://www.mimos.com.co/trabaja-con-nosotros/" target="_blank">Trabaja con nosotros</a>
+        <a href="https://www.mimos.com.co/contacto/" target="_blank">Contacto</a>
+        <a href="https://www.mimos.com.co/convenios/" target="_blank">Convenios</a>
       </div>
+      <p class="footer-copyright">&copy; Mimos® - 2025. Todos los derechos reservados.</p>
     </footer>
   </div>
 

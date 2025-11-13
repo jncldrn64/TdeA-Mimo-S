@@ -379,6 +379,14 @@ footer {
   color: var(--mimo-amarillo);
 }
 
+.footer-copyright {
+  text-align: center;
+  color: var(--mimo-blanco);
+  font-size: 0.85rem;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
 /* ===== CATÁLOGO DE PRODUCTOS ===== */
 
 /* Barra de búsqueda y controles */

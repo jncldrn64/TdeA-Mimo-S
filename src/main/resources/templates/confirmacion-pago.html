@@ -214,7 +214,7 @@
         <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
       </a>
       <div id="barra-superior">
-        <a href="#">
+        <a href="#" onclick="alert('Para soporte, contáctenos en: soporte@mimos.com.co o llámanos al: +57 (604) 123-4567'); return false;">
           <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
           <span>Soporte</span>
         </a>
@@ -246,9 +246,15 @@
         </svg>
       </div>
 
-      <!-- Título -->
-      <h1 class="titulo-confirmacion">¡Pago Exitoso!</h1>
-      <p class="subtitulo-confirmacion">Tu pedido ha sido procesado correctamente</p>
+      <!-- Título - Condicional según método de pago -->
+      <h1 class="titulo-confirmacion"
+          th:text="${pedido.metodoPago == 'TARJETA_CREDITO_EN_LINEA' || pedido.metodoPago == 'TARJETA_DEBITO_EN_LINEA' ? '¡Pago Exitoso!' : '¡Pedido Confirmado!'}">
+        ¡Pago Exitoso!
+      </h1>
+      <p class="subtitulo-confirmacion"
+         th:text="${pedido.metodoPago == 'TARJETA_CREDITO_EN_LINEA' || pedido.metodoPago == 'TARJETA_DEBITO_EN_LINEA' ? 'Tu pago ha sido procesado correctamente' : 'Tu pedido ha sido registrado exitosamente'}">
+        Tu pedido ha sido procesado correctamente
+      </p>
 
       <!-- Detalles del pedido -->
       <div class="tarjeta-pedido">
@@ -282,19 +288,49 @@
         </div>
 
         <div class="detalle-total">
-          <span class="label">Total Pagado:</span>
+          <span class="label"
+                th:text="${pedido.metodoPago == 'TARJETA_CREDITO_EN_LINEA' || pedido.metodoPago == 'TARJETA_DEBITO_EN_LINEA' ? 'Total Pagado:' : 'Total a Pagar:'}">
+            Total Pagado:
+          </span>
           <span class="valor">$<span th:text="${#numbers.formatDecimal(pedido.total != null ? pedido.total : 0.0, 1, 'POINT', 0, 'COMMA')}">75,000</span></span>
         </div>
       </div>
 
-      <!-- Información adicional -->
+      <!-- Información adicional - Condicional según método de pago -->
       <div class="info-adicional">
         <h4>¿Qué sigue ahora?</h4>
-        <ul>
+
+        <!-- Instrucciones para PAGO EN LÍNEA (tarjeta de crédito/débito) -->
+        <ul th:if="${pedido.metodoPago == 'TARJETA_CREDITO_EN_LINEA' || pedido.metodoPago == 'TARJETA_DEBITO_EN_LINEA'}">
           <li>Recibirás un correo de confirmación con los detalles de tu pedido</li>
+          <li>Tu pago ha sido procesado y confirmado exitosamente</li>
           <li>Puedes generar tu factura electrónica haciendo clic en el botón de abajo</li>
           <li>Tu pedido será procesado y enviado en las próximas 24-48 horas</li>
           <li>Te notificaremos cuando tu pedido esté en camino</li>
+        </ul>
+
+        <!-- Instrucciones para EFECTIVO CONTRA ENTREGA -->
+        <ul th:if="${pedido.metodoPago == 'EFECTIVO_CONTRA_ENTREGA'}">
+          <li>Recibirás un correo de confirmación con los detalles de tu pedido</li>
+          <li><strong>IMPORTANTE:</strong> Deberás pagar en efectivo al momento de recibir tu pedido</li>
+          <li>Por favor, ten el monto exacto listo: <strong>$<span th:text="${#numbers.formatDecimal(pedido.total, 1, 'POINT', 0, 'COMMA')}">75,000</span></strong></li>
+          <li>El repartidor te entregará tu factura física junto con el pedido</li>
+          <li>Tu pedido será procesado y enviado en las próximas 24-48 horas</li>
+          <li>Te notificaremos cuando tu pedido esté en camino</li>
+          <li>Si no cuentas con el efectivo al momento de la entrega, el pedido será devuelto</li>
+        </ul>
+
+        <!-- Instrucciones para DATÁFONO CONTRA ENTREGA -->
+        <ul th:if="${pedido.metodoPago == 'DATAFONO_CONTRA_ENTREGA'}">
+          <li>Recibirás un correo de confirmación con los detalles de tu pedido</li>
+          <li><strong>IMPORTANTE:</strong> Deberás pagar con tarjeta (crédito o débito) al momento de recibir tu pedido</li>
+          <li>Monto total a pagar: <strong>$<span th:text="${#numbers.formatDecimal(pedido.total, 1, 'POINT', 0, 'COMMA')}">75,000</span></strong></li>
+          <li>El repartidor llevará un datáfono inalámbrico para procesar tu pago</li>
+          <li>Asegúrate de tener tu tarjeta de crédito o débito lista para el pago</li>
+          <li>Recibirás tu factura electrónica después de confirmar el pago</li>
+          <li>Tu pedido será procesado y enviado en las próximas 24-48 horas</li>
+          <li>Te notificaremos cuando tu pedido esté en camino</li>
+          <li>Si el pago no puede procesarse en la entrega, el pedido será devuelto</li>
         </ul>
       </div>
 
@@ -326,9 +362,6 @@
         <a href="https://www.mimos.com.co/trabaja-con-nosotros/" target="_blank">Trabaja con nosotros</a>
         <a href="https://www.mimos.com.co/contacto/" target="_blank">Contacto</a>
         <a href="https://www.mimos.com.co/convenios/" target="_blank">Convenios</a>
-      </div>
-      <div class="footer-acciones" th:if="${usuario != null}">
-        <a th:href="@{/logout}" class="btn-cerrar-sesion">Cerrar Sesión</a>
       </div>
       <p class="footer-copyright">&copy; Mimos® - 2025. Todos los derechos reservados.</p>
     </footer>

@@ -32,7 +32,7 @@
         <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
       </a>
       <div id="barra-superior">
-        <a href="#">
+        <a href="#" onclick="alert('Para soporte, contáctenos en: soporte@mimos.com.co o llámanos al: +57 (604) 123-4567'); return false;">
           <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
           <span>Soporte</span>
         </a>
@@ -49,6 +49,11 @@
         <a th:if="${usuario != null}" th:href="@{/pedidos}">
           <img th:src="@{/img/pedidos-icon.svg}" alt="Mis Pedidos" src="https://via.placeholder.com/32?text=P">
           <span>Mis Pedidos</span>
+        </a>
+        <!-- Botón Cerrar Sesión - Solo visible si HAY sesión activa -->
+        <a th:if="${usuario != null}" th:href="@{/logout}">
+          <img th:src="@{/img/cuenta-icon.svg}" alt="Cerrar Sesión" src="https://via.placeholder.com/32?text=CS">
+          <span>Cerrar Sesión</span>
         </a>
       </div>
     </header>
@@ -171,9 +176,6 @@
         <a href="https://www.mimos.com.co/trabaja-con-nosotros/" target="_blank">Trabaja con nosotros</a>
         <a href="https://www.mimos.com.co/contacto/" target="_blank">Contacto</a>
         <a href="https://www.mimos.com.co/convenios/" target="_blank">Convenios</a>
-      </div>
-      <div class="footer-acciones" th:if="${usuario != null}">
-        <a th:href="@{/logout}" class="btn-cerrar-sesion">Cerrar Sesión</a>
       </div>
       <p class="footer-copyright">&copy; Mimos® - 2025. Todos los derechos reservados.</p>
     </footer>
