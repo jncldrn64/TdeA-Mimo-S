@@ -32,6 +32,7 @@ public class Pedido {
     private Double iva;
     @Column(name = "costo_envio")
     private Double costoEnvio;
+    private Double descuento;
     private Double total;
     @Column(name = "direccion_envio")
     private String direccionEnvio;
