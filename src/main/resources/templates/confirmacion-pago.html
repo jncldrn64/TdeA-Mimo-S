@@ -279,7 +279,7 @@
 
         <div class="detalle-total">
           <span class="label">Total Pagado:</span>
-          <span class="valor">$<span th:text="${#numbers.formatDecimal(pedido.total != null ? pedido.total : 0.0, 1, 'COMMA', 2, 'POINT')}">0.00</span></span>
+          <span class="valor">$<span th:text="${#numbers.formatDecimal(pedido.total != null ? pedido.total : 0.0, 1, 'POINT', 0, 'COMMA')}">75,000</span></span>
         </div>
       </div>
 
