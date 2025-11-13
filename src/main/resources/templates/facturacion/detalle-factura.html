@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factura | Helados Mimo's</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+
+  <style>
+    .contenedor-factura {
+      max-width: 900px;
+      margin: 2rem auto;
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+
+    /* Estilos para impresión */
+    @media print {
+      .no-imprimir {
+        display: none !important;
+      }
+
+      .contenedor-factura {
+        box-shadow: none;
+        margin: 0;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      .contenedor-central {
+        padding: 0;
+      }
+    }
+
+    .factura-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .factura-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .factura-numero {
+      text-align: right;
+    }
+
+    .factura-numero h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .factura-numero p {
+      margin: 0.25rem 0 0 0;
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+
+    .factura-body {
+      padding: 2rem;
+    }
+
+    .seccion-factura {
+      margin-bottom: 2rem;
+    }
+
+    .titulo-seccion {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #667eea;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #667eea;
+    }
+
+    .datos-cliente {
+      background: #f8f9fa;
+      padding: 1.25rem;
+      border-radius: 6px;
+      border-left: 4px solid #667eea;
+    }
+
+    .datos-cliente p {
+      margin: 0.4rem 0;
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    .datos-cliente strong {
+      color: #555;
+      font-weight: 600;
+      display: inline-block;
+      min-width: 120px;
+    }
+
+    .tabla-resumen {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .tabla-resumen td {
+      padding: 0.75rem 0;
+      font-size: 1rem;
+    }
+
+    .tabla-resumen tr {
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .tabla-resumen tr:last-child {
+      border-bottom: none;
+    }
+
+    .tabla-resumen .label-concepto {
+      color: #555;
+      font-weight: 500;
+    }
+
+    .tabla-resumen .valor-concepto {
+      text-align: right;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .fila-total {
+      background: #f8f9fa;
+      padding: 0.75rem 0 !important;
+      margin-top: 0.5rem;
+    }
+
+    .fila-total .label-concepto {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .fila-total .valor-concepto {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #28a745;
+    }
+
+    .alerta-exitosa {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .alerta-exitosa svg {
+      flex-shrink: 0;
+    }
+
+    .botones-accion {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-accion {
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s;
+      border: none;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .btn-imprimir {
+      background-color: #667eea;
+      color: white;
+    }
+
+    .btn-imprimir:hover {
+      background-color: #5568d3;
+      color: white;
+    }
+
+    .btn-descargar {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .btn-descargar:hover {
+      background-color: #218838;
+      color: white;
+    }
+
+    .btn-volver {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn-volver:hover {
+      background-color: #5a6268;
+      color: white;
+    }
+
+    .info-adicional {
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      color: #856404;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+    }
+
+    .empresa-info {
+      text-align: center;
+      padding: 1.5rem;
+      border-top: 2px solid #e9ecef;
+      margin-top: 2rem;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    .empresa-info h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER (No imprimir) -->
+    <header class="no-imprimir">
+      <a th:href="@{/catalogo}">
+        <!-- NOTA: Logo Mimo's -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a href="#">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
+        </a>
+        <a th:href="@{/carrito}">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
+          <span>Carrito</span>
+        </a>
+        <a th:href="@{/logout}">
+          <img th:src="@{/img/cuenta-icon.svg}" alt="Cerrar Sesión" src="https://via.placeholder.com/32?text=CS">
+          <span>Cerrar Sesión</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO DE LA FACTURA -->
+    <div class="contenedor-factura">
+      <!-- Header de la factura -->
+      <div class="factura-header">
+        <div>
+          <h1>FACTURA ELECTRÓNICA</h1>
+        </div>
+        <div class="factura-numero">
+          <h2 th:text="${factura.numeroFactura}">FACT-20251113-00001</h2>
+          <p>Fecha de Emisión: <span th:text="${#temporals.format(factura.fechaEmision, 'dd/MM/yyyy HH:mm')}">13/11/2025 14:30</span></p>
+        </div>
+      </div>
+
+      <!-- Cuerpo de la factura -->
+      <div class="factura-body">
+        <!-- Alerta de éxito -->
+        <div class="alerta-exitosa no-imprimir">
+          <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+          </svg>
+          <div>
+            <strong>¡Factura generada exitosamente!</strong><br>
+            Se ha enviado una copia a tu correo electrónico.
+          </div>
+        </div>
+
+        <!-- Información de la Empresa -->
+        <div class="seccion-factura">
+          <h3 class="titulo-seccion">Emisor</h3>
+          <div class="datos-cliente">
+            <p><strong>Empresa:</strong> Helados Mimo's S.A.S.</p>
+            <p><strong>NIT:</strong> 900.123.456-7</p>
+            <p><strong>Dirección:</strong> Calle 50 # 45-23, Medellín, Antioquia, Colombia</p>
+            <p><strong>Teléfono:</strong> (604) 444-5555</p>
+            <p><strong>Email:</strong> facturacion@heladosmimos.com</p>
+          </div>
+        </div>
+
+        <!-- Información del Cliente -->
+        <div class="seccion-factura">
+          <h3 class="titulo-seccion">Cliente / Receptor</h3>
+          <div class="datos-cliente">
+            <p><strong>NIT / ID:</strong> <span th:text="${factura.nitCliente}">123456789</span></p>
+            <p><strong>Razón Social:</strong> <span th:text="${factura.razonSocial}">Nombre Fiscal</span></p>
+            <p><strong>Dirección:</strong> <span th:text="${factura.direccionFiscal}">Dirección completa</span></p>
+          </div>
+        </div>
+
+        <!-- Información del Pedido -->
+        <div class="seccion-factura">
+          <h3 class="titulo-seccion">Información del Pedido</h3>
+          <div class="datos-cliente">
+            <p><strong>ID Pedido:</strong> <span th:text="${pedido.idPedido}">123</span></p>
+            <p><strong>Estado:</strong> <span th:text="${pedido.estadoPedido}">PAGADO</span></p>
+            <p><strong>Método de Pago:</strong> <span th:text="${pedido.metodoPago}">TARJETA_CREDITO</span></p>
+            <p th:if="${pedido.fechaConfirmacionPago != null}">
+              <strong>Fecha de Pago:</strong>
+              <span th:text="${#temporals.format(pedido.fechaConfirmacionPago, 'dd/MM/yyyy HH:mm')}">13/11/2025 14:00</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Resumen Financiero -->
+        <div class="seccion-factura">
+          <h3 class="titulo-seccion">Resumen de la Factura</h3>
+          <table class="tabla-resumen">
+            <tbody>
+              <tr>
+                <td class="label-concepto">Subtotal (Base gravable)</td>
+                <td class="valor-concepto">$<span th:text="${#numbers.formatDecimal(factura.subtotal, 1, 'COMMA', 2, 'POINT')}">0.00</span></td>
+              </tr>
+              <tr>
+                <td class="label-concepto">IVA (19%)</td>
+                <td class="valor-concepto">$<span th:text="${#numbers.formatDecimal(factura.iva, 1, 'COMMA', 2, 'POINT')}">0.00</span></td>
+              </tr>
+              <tr class="fila-total">
+                <td class="label-concepto">TOTAL A PAGAR</td>
+                <td class="valor-concepto">$<span th:text="${#numbers.formatDecimal(factura.total, 1, 'COMMA', 2, 'POINT')}">0.00</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="info-adicional">
+          <strong>Nota importante:</strong> Esta factura es un documento electrónico válido según la normativa DIAN de Colombia.
+          Conserva este documento para efectos tributarios y contables.
+        </div>
+
+        <!-- Botones de acción (No imprimir) -->
+        <div class="botones-accion no-imprimir">
+          <button onclick="window.print()" class="btn-accion btn-imprimir">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+              <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+            </svg>
+            Imprimir
+          </button>
+          <a href="#" class="btn-accion btn-descargar" onclick="alert('Funcionalidad de descarga PDF próximamente'); return false;">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+            </svg>
+            Descargar PDF
+          </a>
+          <a th:href="@{/catalogo}" class="btn-accion btn-volver">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+            Volver al Catálogo
+          </a>
+        </div>
+
+        <!-- Información de la empresa al pie -->
+        <div class="empresa-info">
+          <h3>Helados Mimo's</h3>
+          <p>Los mejores helados artesanales de Colombia</p>
+          <p>www.heladosmimos.com | contacto@heladosmimos.com | Tel: (604) 444-5555</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER (No imprimir) -->
+    <footer class="no-imprimir">
+      <p>&copy; 2025 Helados Mimo's. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

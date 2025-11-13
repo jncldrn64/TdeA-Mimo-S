@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pago Exitoso | Helados Mimo's</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+
+  <style>
+    .contenedor-confirmacion {
+      max-width: 700px;
+      margin: 3rem auto;
+      text-align: center;
+    }
+
+    .icono-exito {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      animation: aparecer 0.5s ease-out;
+    }
+
+    @keyframes aparecer {
+      from {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .titulo-confirmacion {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #28a745;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitulo-confirmacion {
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+
+    .tarjeta-pedido {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      text-align: left;
+    }
+
+    .tarjeta-pedido h3 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .detalle-pedido {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .detalle-pedido:last-child {
+      border-bottom: none;
+    }
+
+    .detalle-pedido .label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .detalle-pedido .valor {
+      color: #333;
+      font-weight: 600;
+    }
+
+    .detalle-total {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .detalle-total .label {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .detalle-total .valor {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #28a745;
+    }
+
+    .seccion-acciones {
+      margin-top: 2.5rem;
+    }
+
+    .btn-accion-principal {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem 2.5rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: none;
+      cursor: pointer;
+      margin: 0.5rem;
+    }
+
+    .btn-accion-principal:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      color: white;
+    }
+
+    .btn-accion-secundaria {
+      background: #6c757d;
+      color: white;
+      padding: 1rem 2.5rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: background 0.3s;
+      margin: 0.5rem;
+    }
+
+    .btn-accion-secundaria:hover {
+      background: #5a6268;
+      color: white;
+    }
+
+    .info-adicional {
+      margin-top: 2rem;
+      padding: 1.25rem;
+      background: #e7f3ff;
+      border-left: 4px solid #007bff;
+      border-radius: 6px;
+      text-align: left;
+    }
+
+    .info-adicional h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #004085;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-adicional ul {
+      margin: 0;
+      padding-left: 1.5rem;
+      color: #004085;
+    }
+
+    .info-adicional li {
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .badge-estado {
+      display: inline-block;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-pagado {
+      background: #d4edda;
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER -->
+    <header>
+      <a th:href="@{/catalogo}">
+        <!-- NOTA: Logo Mimo's -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a href="#">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
+        </a>
+        <a th:href="@{/carrito}">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
+          <span>Carrito</span>
+        </a>
+        <a th:href="@{/logout}">
+          <img th:src="@{/img/cuenta-icon.svg}" alt="Cerrar Sesión" src="https://via.placeholder.com/32?text=CS">
+          <span>Cerrar Sesión</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="contenedor-confirmacion">
+      <!-- Ícono de éxito -->
+      <div class="icono-exito">
+        <svg width="48" height="48" fill="white" viewBox="0 0 16 16">
+          <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+        </svg>
+      </div>
+
+      <!-- Título -->
+      <h1 class="titulo-confirmacion">¡Pago Exitoso!</h1>
+      <p class="subtitulo-confirmacion">Tu pedido ha sido procesado correctamente</p>
+
+      <!-- Detalles del pedido -->
+      <div class="tarjeta-pedido">
+        <h3>Detalles del Pedido</h3>
+
+        <div class="detalle-pedido">
+          <span class="label">Número de Pedido:</span>
+          <span class="valor" th:text="${pedido.idPedido}">123</span>
+        </div>
+
+        <div class="detalle-pedido">
+          <span class="label">Estado:</span>
+          <span class="valor">
+            <span class="badge-estado badge-pagado" th:text="${pedido.estadoPedido}">PAGADO</span>
+          </span>
+        </div>
+
+        <div class="detalle-pedido">
+          <span class="label">Método de Pago:</span>
+          <span class="valor" th:text="${pedido.metodoPago}">TARJETA_CREDITO</span>
+        </div>
+
+        <div class="detalle-pedido" th:if="${pedido.fechaConfirmacionPago != null}">
+          <span class="label">Fecha de Pago:</span>
+          <span class="valor" th:text="${#temporals.format(pedido.fechaConfirmacionPago, 'dd/MM/yyyy HH:mm')}">13/11/2025 14:30</span>
+        </div>
+
+        <div class="detalle-pedido">
+          <span class="label">Dirección de Envío:</span>
+          <span class="valor" th:text="${pedido.direccionEnvio}">Calle 50 #45-23</span>
+        </div>
+
+        <div class="detalle-total">
+          <span class="label">Total Pagado:</span>
+          <span class="valor">$<span th:text="${#numbers.formatDecimal(pedido.total != null ? pedido.total : 0.0, 1, 'COMMA', 2, 'POINT')}">0.00</span></span>
+        </div>
+      </div>
+
+      <!-- Información adicional -->
+      <div class="info-adicional">
+        <h4>¿Qué sigue ahora?</h4>
+        <ul>
+          <li>Recibirás un correo de confirmación con los detalles de tu pedido</li>
+          <li>Puedes generar tu factura electrónica haciendo clic en el botón de abajo</li>
+          <li>Tu pedido será procesado y enviado en las próximas 24-48 horas</li>
+          <li>Te notificaremos cuando tu pedido esté en camino</li>
+        </ul>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="seccion-acciones">
+        <a th:href="@{/factura/formulario/{idPedido}(idPedido=${pedido.idPedido})}" class="btn-accion-principal">
+          <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+            <path d="M8.646 6.646a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L10.293 9 8.646 7.354a.5.5 0 0 1 0-.708zm-1.292 0a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0 0 .708l2 2a.5.5 0 0 0 .708-.708L5.707 9l1.647-1.646a.5.5 0 0 0 0-.708z"/>
+          </svg>
+          Generar Factura
+        </a>
+
+        <a th:href="@{/catalogo}" class="btn-accion-secundaria">
+          <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5z"/>
+          </svg>
+          Seguir Comprando
+        </a>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>&copy; 2025 Helados Mimo's. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

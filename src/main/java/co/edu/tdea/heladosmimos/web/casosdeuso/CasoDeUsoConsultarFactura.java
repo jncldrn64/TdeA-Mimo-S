@@ -13,6 +13,10 @@ public class CasoDeUsoConsultarFactura {
     @Autowired
     private ServicioFacturacion servicioFacturacion;
 
+    public Factura ejecutarPorId(Long idFactura) throws FacturaNoEncontradaException {
+        return servicioFacturacion.obtenerFacturaPorId(idFactura);
+    }
+
     public Factura ejecutarPorPedido(Long idPedido) throws FacturaNoEncontradaException {
         return servicioFacturacion.obtenerFacturaDePedido(idPedido);
     }
