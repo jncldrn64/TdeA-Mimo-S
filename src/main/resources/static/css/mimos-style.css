@@ -1098,6 +1098,212 @@ textarea.input-datos-envio {
   color: var(--mimo-marron);
 }
 
+/* ===== PASARELA DE PAGOS ===== */
+
+.contenido-pasarela {
+  padding: 30px;
+  min-height: 500px;
+}
+
+.titulo-pasarela {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--mimo-marron);
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Paso completado en progreso */
+.paso-completado .numero-paso {
+  background-color: var(--mimo-exito);
+  color: white;
+  border-color: var(--mimo-exito);
+}
+
+.paso-completado .texto-paso {
+  color: var(--mimo-exito);
+}
+
+.separador-completado {
+  background-color: var(--mimo-exito);
+}
+
+/* Layout: Métodos de Pago + Resumen (dos columnas) */
+.pasarela-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+/* COLUMNA IZQUIERDA: Métodos de Pago */
+.metodos-pago-container {
+  background-color: var(--mimo-blanco);
+  border: 2px solid var(--mimo-marron);
+  border-radius: 12px;
+  padding: 30px;
+}
+
+.titulo-seccion {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--mimo-marron);
+  margin-bottom: 20px;
+}
+
+/* Secciones de métodos */
+.seccion-metodos {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--mimo-gris-claro);
+}
+
+.seccion-metodos:last-of-type {
+  border-bottom: none;
+}
+
+.subtitulo-metodos {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+/* Item de método de pago */
+.metodo-pago-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  margin-bottom: 10px;
+  border: 2px solid var(--mimo-gris-claro);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.metodo-pago-item:hover {
+  border-color: var(--mimo-amarillo);
+  background-color: rgba(255, 215, 0, 0.05);
+}
+
+.form-check-input:checked ~ .label-metodo {
+  color: var(--mimo-marron);
+  font-weight: bold;
+}
+
+.label-metodo {
+  font-size: 1.1rem;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.label-disabled {
+  color: #999;
+  cursor: not-allowed;
+}
+
+.iconos-tarjetas {
+  display: flex;
+  gap: 8px;
+}
+
+.iconos-tarjetas img {
+  height: 30px;
+  width: auto;
+}
+
+.icono-efectivo img {
+  width: 40px;
+  height: 40px;
+}
+
+/* Formularios de pago */
+.formulario-pago {
+  display: none;
+  margin-top: 30px;
+  padding: 25px;
+  background-color: var(--mimo-amarillo-claro);
+  border-radius: 12px;
+}
+
+.formulario-activo {
+  display: block;
+}
+
+.titulo-formulario {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--mimo-marron);
+  margin-bottom: 20px;
+}
+
+.label-pago {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--mimo-marron);
+}
+
+.input-pago {
+  font-size: 1rem;
+  padding: 10px 15px;
+  border: 2px solid var(--mimo-marron);
+  border-radius: 8px;
+}
+
+.input-pago:focus {
+  border-color: var(--mimo-amarillo);
+  box-shadow: 0 0 0 0.2rem rgba(255, 215, 0, 0.25);
+}
+
+.form-select.input-pago {
+  cursor: pointer;
+}
+
+/* Botón Finalizar Compra */
+.btn-finalizar-compra {
+  width: 100%;
+  margin-top: 30px;
+  padding: 15px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  border-radius: 25px;
+}
+
+.btn-finalizar-compra:disabled {
+  background-color: var(--mimo-gris-claro);
+  border-color: #ccc;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* COLUMNA DERECHA: Resumen del Pago */
+.resumen-pago {
+  background-color: var(--mimo-blanco);
+  border: 3px solid var(--mimo-marron);
+  border-radius: 12px;
+  padding: 25px;
+  position: sticky;
+  top: 20px;
+}
+
+.info-seguridad-pago {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: var(--mimo-amarillo-claro);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.info-seguridad-pago p {
+  margin: 5px 0;
+  font-size: 0.85rem;
+  color: var(--mimo-marron);
+}
+
+.info-seguridad-pago p:first-child {
+  font-size: 1rem;
+}
+
 /* ===== RESPONSIVE (Tablets y móviles) ===== */
 @media (max-width: 768px) {
   .contenedor-central {
@@ -1286,6 +1492,51 @@ textarea.input-datos-envio {
   .btn-guardar-envio,
   .btn-volver {
     flex: 1;
+  }
+
+  /* Pasarela de pagos responsive */
+  .contenido-pasarela {
+    padding: 15px;
+  }
+
+  .titulo-pasarela {
+    font-size: 1.5rem;
+  }
+
+  .pasarela-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .metodos-pago-container {
+    padding: 20px;
+  }
+
+  .titulo-seccion {
+    font-size: 1.3rem;
+  }
+
+  .metodo-pago-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .iconos-tarjetas {
+    align-self: flex-end;
+  }
+
+  .formulario-pago {
+    padding: 20px;
+  }
+
+  .resumen-pago {
+    position: relative;
+    top: 0;
+  }
+
+  .btn-finalizar-compra {
+    font-size: 1.1rem;
   }
 }
 
