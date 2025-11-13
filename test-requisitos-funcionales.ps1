@@ -546,10 +546,51 @@ function Test-RF01-Inventario {
 # [Continúa con las demás funciones de tests...]
 # Por brevedad, solo muestro la estructura. El resto sigue el mismo patrón.
 
+# ==================== COMPLETAR DATOS DE ENVÍO ====================
+
+function Completar-DatosEnvio {
+    Print-Section "COMPLETAR DATOS DE ENVÍO (REQUERIDO PARA CHECKOUT)"
+
+    # Completar datos de envío necesarios para checkout
+    Log-Request "POST" "/datos-envio/guardar"
+
+    try {
+        $body = @{
+            telefono = "3001234567"
+            direccion = "Calle 50 # 45-23, Apto 301"
+            ciudad = "Medellin"
+            codigoPostal = "050001"
+            estadoProvincia = "Antioquia"
+            informacionAdicional = "Porteria 24h"
+        }
+
+        $response = Invoke-WebRequest -Uri "$WebURL/datos-envio/guardar" `
+            -Method POST `
+            -Body $body `
+            -WebSession $Script:Session `
+            -SessionVariable Script:Session `
+            -UseBasicParsing
+
+        Log-Response $response.Content
+
+        if ($response.Content -match "carrito|helados mimo") {
+            Write-Host "✓ Datos de envío completados exitosamente" -ForegroundColor Green
+            Log-Info "Datos de envío guardados"
+        } else {
+            Write-Host "⚠ Respuesta inesperada al guardar datos de envío" -ForegroundColor Yellow
+            Log-Warning "Respuesta inesperada en datos de envío"
+        }
+    } catch {
+        Write-Host "✗ Error al completar datos de envío: $_" -ForegroundColor Red
+        Log-Error "Error en datos de envío: $_"
+    }
+}
+
 function Test-RF05-Carrito {
     Print-Section "FLUJO 6-7: CATÁLOGO Y CARRITO CON SESIÓN ACTIVA"
 
     # Implementar tests 20-31 siguiendo el patrón del script bash
+    # NOTA: Antes de ejecutar checkout, llamar Completar-DatosEnvio
     # ...
 }
 
@@ -659,6 +700,7 @@ function Main {
     Test-RF03-RegistroLogin
     Test-RF01-Inventario
     # Test-RF05-Carrito
+    # Completar-DatosEnvio  # REQUERIDO antes de checkout
     # Test-RF02-Pagos
     # Test-RF04-Facturacion
 

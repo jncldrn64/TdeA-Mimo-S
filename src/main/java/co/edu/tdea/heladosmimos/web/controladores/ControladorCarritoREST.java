@@ -29,6 +29,9 @@ public class ControladorCarritoREST {
     @Autowired
     private ServicioCarritoCompras servicioCarritoCompras;
 
+    @Autowired
+    private co.edu.tdea.heladosmimos.web.puertos.RepositorioUsuario repositorioUsuario;
+
     @GetMapping
     public ResponseEntity<?> obtenerCarrito() {
         List<ItemCarrito> items = casoDeUsoAccesoCarrito.ejecutarObtenerCarrito();
@@ -83,6 +86,56 @@ public class ControladorCarritoREST {
         return ResponseEntity.ok(respuesta);
     }
 
+    @PutMapping("/actualizar")
+    public ResponseEntity<?> actualizarCantidad(
+            @RequestBody Map<String, Object> datos)
+            throws ProductoNoEncontradoException, StockInsuficienteException,
+                   CantidadInvalidaException {
+
+        Long idProducto = Long.valueOf(datos.get("idProducto").toString());
+        Integer nuevaCantidad = Integer.valueOf(datos.get("cantidad").toString());
+
+        casoDeUsoAccesoCarrito.ejecutarModificarCantidad(idProducto, nuevaCantidad);
+
+        // Obtener item actualizado para devolver
+        List<ItemCarrito> items = casoDeUsoAccesoCarrito.ejecutarObtenerCarrito();
+        ItemCarrito itemActualizado = items.stream()
+            .filter(i -> i.getIdProducto().equals(idProducto))
+            .findFirst()
+            .orElse(null);
+
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("success", true);
+        respuesta.put("mensaje", "Cantidad actualizada correctamente");
+
+        if (itemActualizado != null) {
+            Map<String, Object> itemData = new HashMap<>();
+            itemData.put("idProducto", itemActualizado.getIdProducto());
+            itemData.put("cantidad", itemActualizado.getCantidad());
+            itemData.put("subtotal", itemActualizado.getPrecioUnitarioAlAgregar() * itemActualizado.getCantidad());
+            respuesta.put("item", itemData);
+        }
+
+        // Calcular resumen
+        Double subtotal = items.stream()
+            .mapToDouble(i -> i.getPrecioUnitarioAlAgregar() * i.getCantidad())
+            .sum();
+        Double costoEnvio = 5000.0;
+        Double iva = subtotal * 0.19;
+        Double descuento = 0.0;
+        Double total = subtotal + costoEnvio + iva - descuento;
+
+        Map<String, Object> resumen = new HashMap<>();
+        resumen.put("subtotal", subtotal);
+        resumen.put("costoEnvio", costoEnvio);
+        resumen.put("iva", iva);
+        resumen.put("descuento", descuento);
+        resumen.put("total", total);
+        respuesta.put("resumen", resumen);
+
+        return ResponseEntity.ok(respuesta);
+    }
+
     @DeleteMapping("/eliminar/{idProducto}")
     public ResponseEntity<?> eliminarProducto(@PathVariable Long idProducto)
             throws ProductoNoEncontradoException {
@@ -123,6 +176,27 @@ public class ControladorCarritoREST {
             return ResponseEntity.status(401).body(error);
         }
 
+        // Recargar usuario desde BD para obtener datos más recientes (incluyendo datos de envío)
+        Usuario usuarioDB = repositorioUsuario.buscarPorId(usuario.getIdUsuario());
+        if (usuarioDB != null) {
+            usuario = usuarioDB;
+            sesion.setAttribute("usuario", usuario); // Actualizar sesión
+        }
+
+        // Validar si tiene datos de envío completos
+        boolean requiereDatosEnvio = esNuloOVacio(usuario.getTelefono()) ||
+                                     esNuloOVacio(usuario.getDireccion()) ||
+                                     esNuloOVacio(usuario.getCiudad()) ||
+                                     esNuloOVacio(usuario.getEstadoProvincia());
+
+        if (requiereDatosEnvio) {
+            Map<String, Object> respuesta = new HashMap<>();
+            respuesta.put("success", false);
+            respuesta.put("requiereDatosEnvio", true);
+            respuesta.put("mensaje", "Completa tus datos de envío para continuar");
+            return ResponseEntity.ok(respuesta);
+        }
+
         // Procesar checkout y crear pedido
         Pedido pedido = servicioCarritoCompras.procesarCheckout(usuario);
 
@@ -133,5 +207,9 @@ public class ControladorCarritoREST {
         respuesta.put("total", pedido.getTotal());
 
         return ResponseEntity.ok(respuesta);
+    }
+
+    private boolean esNuloOVacio(String valor) {
+        return valor == null || valor.trim().isEmpty();
     }
 }

@@ -29,4 +29,11 @@ public class Usuario {
     private String telefono;
     private String direccion;
     private String nit;
+    private String ciudad;
+    @Column(name = "codigo_postal")
+    private String codigoPostal;
+    @Column(name = "estado_provincia")
+    private String estadoProvincia;
+    @Column(name = "informacion_adicional")
+    private String informacionAdicional;
 }

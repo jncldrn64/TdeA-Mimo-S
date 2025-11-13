@@ -89,7 +89,7 @@ public class ControladorFacturacionREST {
     public ResponseEntity<?> obtenerFactura(@PathVariable Long idFactura)
             throws FacturaNoEncontradaException, ProductoNoEncontradoException {
 
-        Factura factura = casoDeUsoConsultarFactura.ejecutarPorPedido(idFactura);
+        Factura factura = casoDeUsoConsultarFactura.ejecutarPorId(idFactura);
 
         Pedido pedido = repositorioPedido.buscarPorId(factura.getIdPedido())
             .orElseThrow(() -> new ProductoNoEncontradoException(

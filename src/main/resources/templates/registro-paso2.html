@@ -10,6 +10,18 @@
   
   <!-- CSS Custom de Mimo's -->
   <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+
+  <!-- Estilos para placeholders más claros -->
+  <style>
+    ::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+    input::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+  </style>
 </head>
 <body>
   <div class="contenedor-central">
@@ -47,60 +59,57 @@
 
       <!-- FORMULARIO PASO 2: Datos completos -->
       <form th:action="@{/registro/completar}" method="POST" class="form-registro">
-        
-        <!-- Campo oculto con el correo/teléfono validado en paso 1 -->
-        <input type="hidden" name="correoOTelefono" th:value="${correoOTelefono}">
 
-        <!-- NOMBRE COMPLETO -->
+        <!-- NOMBRE -->
         <div class="mb-3">
-          <label for="nombreCompleto" class="form-label label-registro">Nombre completo <span class="texto-obligatorio">*</span></label>
-          <input 
-            type="text" 
-            class="form-control input-registro" 
-            id="nombreCompleto" 
-            name="nombreCompleto" 
-            placeholder="Juan Pérez García"
+          <label for="nombre" class="form-label label-registro">Nombre <span class="texto-obligatorio">*</span></label>
+          <input
+            type="text"
+            class="form-control input-registro"
+            id="nombre"
+            name="nombre"
+            placeholder="Juan"
             required
-            th:value="${nombreCompleto}">
+            th:value="${nombre}">
         </div>
 
-        <!-- CONTRASEÑA -->
+        <!-- APELLIDO -->
         <div class="mb-3">
-          <label for="contrasena" class="form-label label-registro">Contraseña <span class="texto-obligatorio">*</span></label>
-          <input 
-            type="password" 
-            class="form-control input-registro" 
-            id="contrasena" 
-            name="contrasena" 
-            placeholder="Mínimo 8 caracteres"
-            minlength="8"
-            required>
-          <div class="form-text texto-ayuda">
-            Debe tener al menos 8 caracteres
-          </div>
+          <label for="apellido" class="form-label label-registro">Apellido <span class="texto-obligatorio">*</span></label>
+          <input
+            type="text"
+            class="form-control input-registro"
+            id="apellido"
+            name="apellido"
+            placeholder="Pérez García"
+            required
+            th:value="${apellido}">
         </div>
 
         <!-- CONFIRMAR CONTRASEÑA -->
         <div class="mb-3">
           <label for="confirmarContrasena" class="form-label label-registro">Confirmar contraseña <span class="texto-obligatorio">*</span></label>
-          <input 
-            type="password" 
-            class="form-control input-registro" 
-            id="confirmarContrasena" 
-            name="confirmarContrasena" 
+          <input
+            type="password"
+            class="form-control input-registro"
+            id="confirmarContrasena"
+            name="confirmarContrasena"
             placeholder="Repite tu contraseña"
             minlength="8"
             required>
+          <div class="form-text texto-ayuda">
+            Debe coincidir con la contraseña del paso 1
+          </div>
         </div>
 
-        <!-- TELÉFONO (si no fue usado en paso 1) -->
+        <!-- TELÉFONO -->
         <div class="mb-3">
           <label for="telefono" class="form-label label-registro">Teléfono</label>
-          <input 
-            type="tel" 
-            class="form-control input-registro" 
-            id="telefono" 
-            name="telefono" 
+          <input
+            type="tel"
+            class="form-control input-registro"
+            id="telefono"
+            name="telefono"
             placeholder="3001234567"
             th:value="${telefono}">
           <div class="form-text texto-ayuda">
@@ -111,11 +120,11 @@
         <!-- DIRECCIÓN -->
         <div class="mb-3">
           <label for="direccion" class="form-label label-registro">Dirección de envío</label>
-          <input 
-            type="text" 
-            class="form-control input-registro" 
-            id="direccion" 
-            name="direccion" 
+          <input
+            type="text"
+            class="form-control input-registro"
+            id="direccion"
+            name="direccion"
             placeholder="Calle 123 # 45-67, Apto 801"
             th:value="${direccion}">
           <div class="form-text texto-ayuda">
@@ -123,8 +132,20 @@
           </div>
         </div>
 
-        <!-- ROL (hidden, siempre CLIENTE) -->
-        <input type="hidden" name="rol" value="CLIENTE">
+        <!-- NIT -->
+        <div class="mb-3">
+          <label for="nit" class="form-label label-registro">NIT</label>
+          <input
+            type="text"
+            class="form-control input-registro"
+            id="nit"
+            name="nit"
+            placeholder="900123456-7"
+            th:value="${nit}">
+          <div class="form-text texto-ayuda">
+            Opcional - Para facturación electrónica
+          </div>
+        </div>
 
         <!-- TÉRMINOS Y CONDICIONES -->
         <div class="mb-4">

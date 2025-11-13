@@ -2,10 +2,12 @@ package co.edu.tdea.heladosmimos.web.controladores;
 
 import co.edu.tdea.heladosmimos.web.entidades.DatosPago;
 import co.edu.tdea.heladosmimos.web.entidades.Pedido;
+import co.edu.tdea.heladosmimos.web.entidades.Usuario;
 import co.edu.tdea.heladosmimos.web.entidades.enums.MetodoPago;
 import co.edu.tdea.heladosmimos.web.casosdeuso.CasoDeUsoProcesarPago;
 import co.edu.tdea.heladosmimos.web.excepciones.*;
 import co.edu.tdea.heladosmimos.web.puertos.RepositorioPedido;
+import co.edu.tdea.heladosmimos.web.puertos.RepositorioUsuario;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,9 @@ public class ControladorPagos {
     private RepositorioPedido repositorioPedido;
 
     @Autowired
+    private RepositorioUsuario repositorioUsuario;
+
+    @Autowired
     private CasoDeUsoProcesarPago casoDeUsoProcesarPago;
 
     /**
@@ -41,6 +46,19 @@ public class ControladorPagos {
                 .orElseThrow(() -> new ProductoNoEncontradoException(
                     "No existe pedido con ID: " + idPedido));
 
+            // Obtener usuario del pedido
+            Usuario usuario = repositorioUsuario.buscarPorId(pedido.getIdUsuario());
+
+            // Agregar variables individuales para el HTML
+            modelo.addAttribute("idPedido", pedido.getIdPedido());
+            modelo.addAttribute("usuario", usuario);
+            modelo.addAttribute("subtotal", pedido.getSubtotal() != null ? pedido.getSubtotal() : 0.0);
+            modelo.addAttribute("iva", pedido.getIva() != null ? pedido.getIva() : 0.0);
+            modelo.addAttribute("costoEnvio", pedido.getCostoEnvio() != null ? pedido.getCostoEnvio() : 0.0);
+            modelo.addAttribute("descuento", pedido.getDescuento() != null ? pedido.getDescuento() : 0.0);
+            modelo.addAttribute("total", pedido.getTotal() != null ? pedido.getTotal() : 0.0);
+
+            // Mantener compatibilidad con posibles otros usos
             modelo.addAttribute("pedido", pedido);
             modelo.addAttribute("metodosPago", MetodoPago.values());
             modelo.addAttribute("datosPago", new DatosPago());
@@ -69,7 +87,7 @@ public class ControladorPagos {
                 idPedido, metodoPago, datosPago);
 
             modelo.addAttribute("resultado", resultado);
-            return "redirect:/pago/confirmacion?idPedido=" + idPedido;
+            return "redirect:/pasarela/confirmacion?idPedido=" + idPedido;
 
         } catch (PedidoYaPagadoException | DatosTarjetaInvalidosException |
                  PagoRechazadoException | MetodoPagoNoSoportadoException |

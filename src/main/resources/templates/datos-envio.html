@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datos de Envío | Helados Mimo's</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+
+  <!-- Estilos para placeholders más claros -->
+  <style>
+    ::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+    input::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+    textarea::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER -->
+    <header>
+      <a th:href="@{/catalogo}">
+        <!-- NOTA: Logo Mimo's -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a href="#">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
+        </a>
+        <a th:href="@{/carrito}">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
+          <span>Carrito</span>
+        </a>
+        <a th:if="${usuario != null}" th:href="@{/pedidos}">
+          <img th:src="@{/img/pedidos-icon.svg}" alt="Mis Pedidos" src="https://via.placeholder.com/32?text=P">
+          <span>Mis Pedidos</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="contenido-datos-envio">
+      <h1 class="titulo-datos-envio">Completar Datos de Envío</h1>
+      <p class="subtitulo-datos-envio">Necesitamos estos datos para procesar tu pedido</p>
+
+      <!-- Mensaje de error si existe -->
+      <div th:if="${error}" class="alert alert-danger alert-custom" role="alert">
+        <p th:text="${error}">Error al guardar datos</p>
+      </div>
+
+      <!-- Información del progreso -->
+      <div class="progreso-checkout">
+        <div class="paso-checkout paso-activo">
+          <span class="numero-paso">1</span>
+          <span class="texto-paso">Datos de Envío</span>
+        </div>
+        <div class="separador-paso"></div>
+        <div class="paso-checkout">
+          <span class="numero-paso">2</span>
+          <span class="texto-paso">Método de Pago</span>
+        </div>
+        <div class="separador-paso"></div>
+        <div class="paso-checkout">
+          <span class="numero-paso">3</span>
+          <span class="texto-paso">Confirmación</span>
+        </div>
+      </div>
+
+      <!-- FORMULARIO DE DATOS DE ENVÍO -->
+      <form th:action="@{/datos-envio/guardar}" method="POST" class="form-datos-envio">
+        
+        <!-- NOMBRE COMPLETO (readonly, solo para mostrar) -->
+        <div class="mb-3">
+          <label for="nombreCompleto" class="form-label label-datos-envio">Nombre completo</label>
+          <input
+            type="text"
+            class="form-control input-datos-envio input-readonly"
+            id="nombreCompleto"
+            th:value="${usuario.nombre} + ' ' + ${usuario.apellido}"
+            readonly>
+          <div class="form-text texto-ayuda">
+            Este es el nombre registrado en tu cuenta
+          </div>
+        </div>
+
+        <!-- TELÉFONO (obligatorio si no lo tiene) -->
+        <div class="mb-3">
+          <label for="telefono" class="form-label label-datos-envio">
+            Teléfono de contacto <span class="texto-obligatorio">*</span>
+          </label>
+          <input 
+            type="tel" 
+            class="form-control input-datos-envio" 
+            id="telefono" 
+            name="telefono" 
+            placeholder="3001234567"
+            pattern="[0-9]{10}"
+            required
+            th:value="${usuario.telefono}">
+          <div class="form-text texto-ayuda">
+            Para notificaciones sobre tu pedido (10 dígitos)
+          </div>
+        </div>
+
+        <!-- DIRECCIÓN COMPLETA -->
+        <div class="mb-3">
+          <label for="direccion" class="form-label label-datos-envio">
+            Dirección completa <span class="texto-obligatorio">*</span>
+          </label>
+          <input 
+            type="text" 
+            class="form-control input-datos-envio" 
+            id="direccion" 
+            name="direccion" 
+            placeholder="Calle 123 # 45-67, Apto 801"
+            required
+            th:value="${usuario.direccion}">
+          <div class="form-text texto-ayuda">
+            Incluye número, apartamento/casa, torre, etc.
+          </div>
+        </div>
+
+        <!-- CIUDAD -->
+        <div class="mb-3">
+          <label for="ciudad" class="form-label label-datos-envio">
+            Ciudad <span class="texto-obligatorio">*</span>
+          </label>
+          <input 
+            type="text" 
+            class="form-control input-datos-envio" 
+            id="ciudad" 
+            name="ciudad" 
+            placeholder="Medellín"
+            required
+            th:value="${usuario.ciudad}">
+        </div>
+
+        <!-- CÓDIGO POSTAL (opcional) -->
+        <div class="mb-3">
+          <label for="codigoPostal" class="form-label label-datos-envio">Código Postal</label>
+          <input 
+            type="text" 
+            class="form-control input-datos-envio" 
+            id="codigoPostal" 
+            name="codigoPostal" 
+            placeholder="050001"
+            pattern="[0-9]{5,6}"
+            th:value="${usuario.codigoPostal}">
+          <div class="form-text texto-ayuda">
+            Opcional - 5 o 6 dígitos
+          </div>
+        </div>
+
+        <!-- ESTADO/PROVINCIA/DEPARTAMENTO -->
+        <div class="mb-3">
+          <label for="estadoProvincia" class="form-label label-datos-envio">
+            Departamento/Estado <span class="texto-obligatorio">*</span>
+          </label>
+          <select 
+            class="form-select input-datos-envio" 
+            id="estadoProvincia" 
+            name="estadoProvincia" 
+            required>
+            <option value="" selected>Selecciona un departamento</option>
+            <!-- Departamentos de Colombia (puedes ajustar según tu país) -->
+            <option value="Amazonas" th:selected="${usuario.estadoProvincia == 'Amazonas'}">Amazonas</option>
+            <option value="Antioquia" th:selected="${usuario.estadoProvincia == 'Antioquia'}">Antioquia</option>
+            <option value="Arauca" th:selected="${usuario.estadoProvincia == 'Arauca'}">Arauca</option>
+            <option value="Atlántico" th:selected="${usuario.estadoProvincia == 'Atlántico'}">Atlántico</option>
+            <option value="Bolívar" th:selected="${usuario.estadoProvincia == 'Bolívar'}">Bolívar</option>
+            <option value="Boyacá" th:selected="${usuario.estadoProvincia == 'Boyacá'}">Boyacá</option>
+            <option value="Caldas" th:selected="${usuario.estadoProvincia == 'Caldas'}">Caldas</option>
+            <option value="Caquetá" th:selected="${usuario.estadoProvincia == 'Caquetá'}">Caquetá</option>
+            <option value="Casanare" th:selected="${usuario.estadoProvincia == 'Casanare'}">Casanare</option>
+            <option value="Cauca" th:selected="${usuario.estadoProvincia == 'Cauca'}">Cauca</option>
+            <option value="Cesar" th:selected="${usuario.estadoProvincia == 'Cesar'}">Cesar</option>
+            <option value="Chocó" th:selected="${usuario.estadoProvincia == 'Chocó'}">Chocó</option>
+            <option value="Córdoba" th:selected="${usuario.estadoProvincia == 'Córdoba'}">Córdoba</option>
+            <option value="Cundinamarca" th:selected="${usuario.estadoProvincia == 'Cundinamarca'}">Cundinamarca</option>
+            <option value="Guainía" th:selected="${usuario.estadoProvincia == 'Guainía'}">Guainía</option>
+            <option value="Guaviare" th:selected="${usuario.estadoProvincia == 'Guaviare'}">Guaviare</option>
+            <option value="Huila" th:selected="${usuario.estadoProvincia == 'Huila'}">Huila</option>
+            <option value="La Guajira" th:selected="${usuario.estadoProvincia == 'La Guajira'}">La Guajira</option>
+            <option value="Magdalena" th:selected="${usuario.estadoProvincia == 'Magdalena'}">Magdalena</option>
+            <option value="Meta" th:selected="${usuario.estadoProvincia == 'Meta'}">Meta</option>
+            <option value="Nariño" th:selected="${usuario.estadoProvincia == 'Nariño'}">Nariño</option>
+            <option value="Norte de Santander" th:selected="${usuario.estadoProvincia == 'Norte de Santander'}">Norte de Santander</option>
+            <option value="Putumayo" th:selected="${usuario.estadoProvincia == 'Putumayo'}">Putumayo</option>
+            <option value="Quindío" th:selected="${usuario.estadoProvincia == 'Quindío'}">Quindío</option>
+            <option value="Risaralda" th:selected="${usuario.estadoProvincia == 'Risaralda'}">Risaralda</option>
+            <option value="San Andrés y Providencia" th:selected="${usuario.estadoProvincia == 'San Andrés y Providencia'}">San Andrés y Providencia</option>
+            <option value="Santander" th:selected="${usuario.estadoProvincia == 'Santander'}">Santander</option>
+            <option value="Sucre" th:selected="${usuario.estadoProvincia == 'Sucre'}">Sucre</option>
+            <option value="Tolima" th:selected="${usuario.estadoProvincia == 'Tolima'}">Tolima</option>
+            <option value="Valle del Cauca" th:selected="${usuario.estadoProvincia == 'Valle del Cauca'}">Valle del Cauca</option>
+            <option value="Vaupés" th:selected="${usuario.estadoProvincia == 'Vaupés'}">Vaupés</option>
+            <option value="Vichada" th:selected="${usuario.estadoProvincia == 'Vichada'}">Vichada</option>
+          </select>
+        </div>
+
+        <!-- INFORMACIÓN ADICIONAL (opcional) -->
+        <div class="mb-4">
+          <label for="informacionAdicional" class="form-label label-datos-envio">Información adicional</label>
+          <textarea 
+            class="form-control input-datos-envio" 
+            id="informacionAdicional" 
+            name="informacionAdicional" 
+            rows="3"
+            placeholder="Puntos de referencia, instrucciones especiales para la entrega, etc."
+            th:text="${usuario.informacionAdicional}"></textarea>
+          <div class="form-text texto-ayuda">
+            Opcional - Ayúdanos a encontrar tu dirección más fácilmente
+          </div>
+        </div>
+
+        <!-- NOTA SOBRE CAMPOS OBLIGATORIOS -->
+        <div class="nota-campos">
+          <p><span class="texto-obligatorio">*</span> Campos obligatorios</p>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="botones-datos-envio">
+          <button type="submit" class="btn btn-primary btn-mimo btn-guardar-envio">
+            Guardar y Continuar
+          </button>
+          <a th:href="@{/carrito}" class="btn btn-secondary btn-mimo btn-volver">
+            Volver al Carrito
+          </a>
+        </div>
+      </form>
+
+      <!-- INFORMACIÓN DE SEGURIDAD -->
+      <div class="info-seguridad">
+        <p>
+          🔒 Tus datos están protegidos. Solo los usamos para procesar y entregar tu pedido.
+        </p>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-links">
+        <a href="https://www.mimos.com.co/wp-content/uploads/2024/05/AVISO-DE-PRIVACIDAD.pdf" target="_blank">Aviso de Privacidad</a>
+        <a href="https://www.mimos.com.co/wp-content/uploads/2025/09/JRJRPR005-M.Proteccion-de-Datos-Personales-V1W.pdf" target="_blank">Protección de Datos</a>
+        <a href="https://www.mimos.com.co/encuentranos/" target="_blank">Encuéntranos</a>
+        <a href="https://www.mimos.com.co/trabaja-con-nosotros/" target="_blank">Trabaja con nosotros</a>
+        <a href="https://www.mimos.com.co/contacto/" target="_blank">Contacto</a>
+        <a href="https://www.mimos.com.co/convenios/" target="_blank">Convenios</a>
+      </div>
+      <div class="footer-acciones" th:if="${usuario != null}">
+        <a th:href="@{/logout}" class="btn-cerrar-sesion">Cerrar Sesión</a>
+      </div>
+      <p class="footer-copyright">&copy; Mimos® - 2025. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- JS mínimo: Validación de formulario -->
+  <script>
+    // Validar formato de teléfono en tiempo real
+    const inputTelefono = document.getElementById('telefono');
+    if (inputTelefono) {
+      inputTelefono.addEventListener('input', function(e) {
+        // Solo permitir números
+        this.value = this.value.replace(/[^0-9]/g, '');
+        
+        // Limitar a 10 dígitos
+        if (this.value.length > 10) {
+          this.value = this.value.slice(0, 10);
+        }
+      });
+    }
+
+    // Validar código postal (solo números)
+    const inputCodigoPostal = document.getElementById('codigoPostal');
+    if (inputCodigoPostal) {
+      inputCodigoPostal.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        
+        if (this.value.length > 6) {
+          this.value = this.value.slice(0, 6);
+        }
+      });
+    }
+
+    // Validar antes de enviar
+    document.querySelector('.form-datos-envio').addEventListener('submit', function(e) {
+      const telefono = document.getElementById('telefono').value;
+      
+      if (telefono.length !== 10) {
+        e.preventDefault();
+        alert('El teléfono debe tener exactamente 10 dígitos');
+        document.getElementById('telefono').focus();
+        return false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -246,14 +246,19 @@ public class ServicioCarritoCompras {
             pedido.setFechaCreacion(LocalDateTime.now());
             // fechaConfirmacionPago se asigna en ServicioPagos después del pago exitoso
 
-            // Calcular subtotal e IVA (19% Colombia)
-            Double subtotal = totalCalculado / 1.19; // Sacar el IVA incluido
-            Double iva = totalCalculado - subtotal;
+            // Calcular subtotal, IVA y total
+            // totalCalculado ya es el subtotal (suma de precio * cantidad de cada item)
+            Double subtotal = totalCalculado;
+            Double costoEnvio = 5000.0; // Costo de envío ficticio por ahora - debe coincidir con el carrito
+            Double descuento = 0.0; // Sin descuentos por ahora
+            Double iva = subtotal * 0.19; // IVA 19% Colombia
+            Double total = subtotal + iva + costoEnvio;
 
             pedido.setSubtotal(subtotal);
             pedido.setIva(iva);
-            pedido.setCostoEnvio(0.0); // Sin costo de envío por ahora
-            pedido.setTotal(totalCalculado);
+            pedido.setCostoEnvio(costoEnvio);
+            pedido.setDescuento(descuento);
+            pedido.setTotal(total);
             pedido.setDireccionEnvio(usuario.getDireccion());
             pedido.setTelefonoContacto(usuario.getTelefono());
 
