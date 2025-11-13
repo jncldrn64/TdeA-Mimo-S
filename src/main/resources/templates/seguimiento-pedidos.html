@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Pedidos | Helados Mimo's</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER -->
+    <header>
+      <a th:href="@{/catalogo}">
+        <!-- NOTA: Logo Mimo's -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a href="#">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
+        </a>
+        <a th:href="@{/carrito}">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
+          <span>Carrito</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL: SEGUIMIENTO DE PEDIDOS -->
+    <div class="contenido-seguimiento">
+      
+      <!-- Título y filtros -->
+      <div class="header-seguimiento">
+        <h1 class="titulo-seguimiento">Mis pedidos</h1>
+        
+        <!-- Filtros -->
+        <div class="filtros-seguimiento">
+          <select class="form-select filtro-estado" id="filtroEstado" onchange="filtrarPedidos()">
+            <option value="">Todos los estados</option>
+            <option value="PENDIENTE_PAGO">Pendiente de pago</option>
+            <option value="PAGO_CONFIRMADO">Pago confirmado</option>
+            <option value="EN_PREPARACION">En preparación</option>
+            <option value="EN_CAMINO">En camino</option>
+            <option value="ENTREGADO">Entregado</option>
+            <option value="CANCELADO">Cancelado</option>
+          </select>
+
+          <input 
+            type="text" 
+            class="form-control buscar-pedido" 
+            id="buscarPedido" 
+            placeholder="Buscar por #pedido"
+            onkeyup="buscarPorNumero()">
+        </div>
+      </div>
+
+      <!-- Mensaje si no hay pedidos -->
+      <div th:if="${#lists.isEmpty(pedidos)}" class="sin-pedidos">
+        <img th:src="@{/img/empty-box.svg}" alt="Sin pedidos" class="icono-sin-pedidos" src="https://via.placeholder.com/150?text=📦">
+        <h3>Aún no tienes pedidos</h3>
+        <p>Cuando realices tu primera compra, aquí aparecerá el historial.</p>
+        <a th:href="@{/catalogo}" class="btn btn-primary btn-mimo">Ir al catálogo</a>
+      </div>
+
+      <!-- Lista de pedidos -->
+      <div th:unless="${#lists.isEmpty(pedidos)}" class="lista-pedidos">
+        
+        <!-- Pedido individual (card) -->
+        <div th:each="pedido : ${pedidos}" 
+             class="card-pedido" 
+             th:attr="data-estado=${pedido.estadoPedido}">
+          
+          <!-- Header del card -->
+          <div class="header-card-pedido">
+            <div class="info-basica-pedido">
+              <span class="numero-pedido">#<span th:text="${pedido.idPedido}">12345</span></span>
+              <span class="fecha-pedido" th:text="${#temporals.format(pedido.fechaCreacion, 'dd/MM/yyyy HH:mm')}">13/11/2025 22:15</span>
+            </div>
+            
+            <!-- Badge de estado -->
+            <span class="badge-estado"
+                  th:classappend="${pedido.estadoPedido == 'PENDIENTE_PAGO' ? 'badge-pendiente' :
+                                   pedido.estadoPedido == 'PAGO_CONFIRMADO' ? 'badge-confirmado' :
+                                   pedido.estadoPedido == 'EN_PREPARACION' ? 'badge-preparacion' :
+                                   pedido.estadoPedido == 'EN_CAMINO' ? 'badge-camino' :
+                                   pedido.estadoPedido == 'ENTREGADO' ? 'badge-entregado' : 
+                                   'badge-cancelado'}">
+              <span th:text="${pedido.estadoPedido == 'PENDIENTE_PAGO' ? 'Pendiente de pago' :
+                              pedido.estadoPedido == 'PAGO_CONFIRMADO' ? 'Pago confirmado' :
+                              pedido.estadoPedido == 'EN_PREPARACION' ? 'En preparación' :
+                              pedido.estadoPedido == 'EN_CAMINO' ? 'En camino' :
+                              pedido.estadoPedido == 'ENTREGADO' ? 'Entregado' : 
+                              'Cancelado'}">Pago confirmado</span>
+            </span>
+          </div>
+
+          <!-- Detalles del pedido -->
+          <div class="detalles-pedido">
+            
+            <!-- Información de envío -->
+            <div class="seccion-detalle">
+              <strong>Dirección de entrega:</strong>
+              <p th:text="${pedido.direccionEnvio}">Calle 123 #45-67, Apto 801</p>
+            </div>
+
+            <!-- Método de pago -->
+            <div class="seccion-detalle">
+              <strong>Método de pago:</strong>
+              <p th:text="${pedido.metodoPago == 'TARJETA_CREDITO_DEBITO' ? 'Tarjeta de crédito/débito' : 
+                           pedido.metodoPago == 'EFECTIVO_CONTRA_ENTREGA' ? 'Efectivo contra entrega' : 
+                           pedido.metodoPago == 'DATAFONO_CONTRA_ENTREGA' ? 'Datáfono contra entrega' : 
+                           'PayPal'}">Tarjeta</p>
+            </div>
+
+            <!-- Resumen de costos -->
+            <div class="resumen-costos">
+              <div class="linea-costo">
+                <span>Subtotal:</span>
+                <span>$<span th:text="${#numbers.formatDecimal(pedido.subtotal, 1, 'POINT', 0, 'COMMA')}">59,500</span></span>
+              </div>
+              <div class="linea-costo">
+                <span>IVA:</span>
+                <span>$<span th:text="${#numbers.formatDecimal(pedido.iva, 1, 'POINT', 0, 'COMMA')}">11,305</span></span>
+              </div>
+              <div class="linea-costo">
+                <span>Envío:</span>
+                <span>$<span th:text="${#numbers.formatDecimal(pedido.costoEnvio, 1, 'POINT', 0, 'COMMA')}">5,000</span></span>
+              </div>
+              <div class="linea-costo linea-total">
+                <strong>Total:</strong>
+                <strong>$<span th:text="${#numbers.formatDecimal(pedido.total, 1, 'POINT', 0, 'COMMA')}">75,805</span></strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Barra de progreso (timeline) -->
+          <div class="timeline-pedido">
+            <div class="paso-timeline"
+                 th:classappend="${pedido.estadoPedido == 'PAGO_CONFIRMADO' or 
+                                  pedido.estadoPedido == 'EN_PREPARACION' or 
+                                  pedido.estadoPedido == 'EN_CAMINO' or 
+                                  pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' : ''}">
+              <div class="icono-paso">✓</div>
+              <span class="label-paso">Confirmado</span>
+            </div>
+
+            <div class="linea-timeline"
+                 th:classappend="${pedido.estadoPedido == 'EN_PREPARACION' or 
+                                  pedido.estadoPedido == 'EN_CAMINO' or 
+                                  pedido.estadoPedido == 'ENTREGADO' ? 'linea-completada' : ''}"></div>
+
+            <div class="paso-timeline"
+                 th:classappend="${pedido.estadoPedido == 'EN_PREPARACION' or 
+                                  pedido.estadoPedido == 'EN_CAMINO' or 
+                                  pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' : 
+                                  pedido.estadoPedido == 'PAGO_CONFIRMADO' ? 'paso-activo' : ''}">
+              <div class="icono-paso">🍦</div>
+              <span class="label-paso">Preparación</span>
+            </div>
+
+            <div class="linea-timeline"
+                 th:classappend="${pedido.estadoPedido == 'EN_CAMINO' or 
+                                  pedido.estadoPedido == 'ENTREGADO' ? 'linea-completada' : ''}"></div>
+
+            <div class="paso-timeline"
+                 th:classappend="${pedido.estadoPedido == 'EN_CAMINO' or 
+                                  pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' : 
+                                  pedido.estadoPedido == 'EN_PREPARACION' ? 'paso-activo' : ''}">
+              <div class="icono-paso">🚚</div>
+              <span class="label-paso">En camino</span>
+            </div>
+
+            <div class="linea-timeline"
+                 th:classappend="${pedido.estadoPedido == 'ENTREGADO' ? 'linea-completada' : ''}"></div>
+
+            <div class="paso-timeline"
+                 th:classappend="${pedido.estadoPedido == 'ENTREGADO' ? 'paso-completado' : 
+                                  pedido.estadoPedido == 'EN_CAMINO' ? 'paso-activo' : ''}">
+              <div class="icono-paso">📦</div>
+              <span class="label-paso">Entregado</span>
+            </div>
+          </div>
+
+          <!-- Acciones del pedido -->
+          <div class="acciones-pedido">
+            <a th:href="@{/pedido/{id}(id=${pedido.idPedido})}" class="btn btn-sm btn-outline-primary">
+              Ver detalles
+            </a>
+            
+            <a th:if="${pedido.estadoPedido == 'ENTREGADO'}" 
+               th:href="@{/factura/{id}(id=${pedido.idPedido})}" 
+               class="btn btn-sm btn-outline-secondary">
+              📄 Factura
+            </a>
+
+            <button th:if="${pedido.estadoPedido == 'PENDIENTE_PAGO'}" 
+                    class="btn btn-sm btn-danger"
+                    onclick="cancelarPedido([[${pedido.idPedido}]])">
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-links">
+        <a href="#">Convenios</a>
+        <a href="#">Encuéntranos</a>
+        <a href="#">Trabaja con nosotros</a>
+        <a href="#">Contacto</a>
+        <a href="#">Políticas</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- JavaScript para filtros y acciones -->
+  <script>
+    // Filtrar pedidos por estado
+    function filtrarPedidos() {
+      const estadoSeleccionado = document.getElementById('filtroEstado').value;
+      const pedidos = document.querySelectorAll('.card-pedido');
+
+      pedidos.forEach(pedido => {
+        const estadoPedido = pedido.getAttribute('data-estado');
+        
+        if (estadoSeleccionado === '' || estadoPedido === estadoSeleccionado) {
+          pedido.style.display = 'block';
+        } else {
+          pedido.style.display = 'none';
+        }
+      });
+    }
+
+    // Buscar pedido por número
+    function buscarPorNumero() {
+      const busqueda = document.getElementById('buscarPedido').value.toLowerCase();
+      const pedidos = document.querySelectorAll('.card-pedido');
+
+      pedidos.forEach(pedido => {
+        const numeroPedido = pedido.querySelector('.numero-pedido').textContent.toLowerCase();
+        
+        if (numeroPedido.includes(busqueda)) {
+          pedido.style.display = 'block';
+        } else {
+          pedido.style.display = 'none';
+        }
+      });
+    }
+
+    // Cancelar pedido
+    function cancelarPedido(idPedido) {
+      if (!confirm('¿Estás seguro de que deseas cancelar este pedido?')) {
+        return;
+      }
+
+      fetch('/api/pedido/' + idPedido + '/cancelar', {
+        method: 'POST'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Pedido cancelado exitosamente');
+          location.reload();
+        } else {
+          alert('Error al cancelar pedido: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cancelar pedido');
+      });
+    }
+  </script>
+</body>
+</html>

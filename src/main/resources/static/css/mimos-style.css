@@ -1407,6 +1407,436 @@ textarea.input-datos-envio {
   color: var(--mimo-marron);
 }
 
+/* ===== CONFIRMACIÓN DE PEDIDO ===== */
+
+.contenido-confirmacion {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 40px;
+  text-align: center;
+}
+
+.icono-exito {
+  margin-bottom: 30px;
+  animation: aparecer 0.5s ease-out;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.titulo-confirmacion {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--mimo-marron);
+  margin-bottom: 10px;
+}
+
+.subtitulo-confirmacion {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+.info-pedido-confirmacion {
+  background-color: var(--mimo-amarillo-claro);
+  border: 2px solid var(--mimo-amarillo);
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.dato-pedido {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.dato-pedido:last-child {
+  border-bottom: none;
+}
+
+.label-dato {
+  font-size: 1rem;
+  color: #666;
+}
+
+.valor-dato {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--mimo-marron);
+}
+
+.pedido-numero {
+  font-size: 1.3rem;
+  color: var(--mimo-amarillo);
+  background-color: var(--mimo-marron);
+  padding: 5px 15px;
+  border-radius: 20px;
+}
+
+.valor-total {
+  font-size: 1.4rem;
+  color: var(--mimo-exito);
+}
+
+.badge-estado {
+  display: inline-block;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.badge-confirmado {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.instrucciones-entrega {
+  background-color: var(--mimo-blanco);
+  border: 2px solid var(--mimo-marron);
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.titulo-instrucciones {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--mimo-marron);
+  margin-bottom: 15px;
+}
+
+.contenido-instrucciones p {
+  margin-bottom: 15px;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.mensaje-correo {
+  background-color: var(--mimo-amarillo-claro);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+.mensaje-correo p {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--mimo-marron);
+}
+
+.acciones-confirmacion {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.tiempo-entrega {
+  padding: 20px;
+  background-color: var(--mimo-gris-claro);
+  border-radius: 8px;
+}
+
+.tiempo-entrega p {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--mimo-marron);
+}
+
+/* ===== SEGUIMIENTO DE PEDIDOS ===== */
+
+.contenido-seguimiento {
+  padding: 30px;
+  min-height: 500px;
+}
+
+.header-seguimiento {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.titulo-seguimiento {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--mimo-marron);
+  margin: 0;
+}
+
+.filtros-seguimiento {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.filtro-estado {
+  width: 200px;
+  padding: 10px;
+  border: 2px solid var(--mimo-marron);
+  border-radius: 25px;
+  font-size: 0.95rem;
+}
+
+.buscar-pedido {
+  width: 250px;
+  padding: 10px 15px;
+  border: 2px solid var(--mimo-marron);
+  border-radius: 25px;
+  font-size: 0.95rem;
+}
+
+/* Sin pedidos */
+.sin-pedidos {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.icono-sin-pedidos {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 30px;
+  opacity: 0.5;
+}
+
+.sin-pedidos h3 {
+  font-size: 1.5rem;
+  color: var(--mimo-marron);
+  margin-bottom: 15px;
+}
+
+.sin-pedidos p {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+/* Lista de pedidos */
+.lista-pedidos {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Card de pedido */
+.card-pedido {
+  background-color: var(--mimo-blanco);
+  border: 2px solid var(--mimo-marron);
+  border-radius: 12px;
+  padding: 25px;
+  transition: box-shadow 0.3s;
+}
+
+.card-pedido:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.header-card-pedido {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--mimo-gris-claro);
+}
+
+.info-basica-pedido {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.numero-pedido {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--mimo-marron);
+}
+
+.fecha-pedido {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Badges de estado */
+.badge-pendiente {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.badge-preparacion {
+  background-color: #cfe2ff;
+  color: #084298;
+}
+
+.badge-camino {
+  background-color: #e7f3ff;
+  color: #0056b3;
+}
+
+.badge-entregado {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.badge-cancelado {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Detalles del pedido */
+.detalles-pedido {
+  margin-bottom: 25px;
+}
+
+.seccion-detalle {
+  margin-bottom: 15px;
+}
+
+.seccion-detalle strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--mimo-marron);
+  margin-bottom: 5px;
+}
+
+.seccion-detalle p {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+/* Resumen de costos */
+.resumen-costos {
+  background-color: var(--mimo-amarillo-claro);
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.linea-costo {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 0.95rem;
+}
+
+.linea-total {
+  border-top: 2px solid var(--mimo-marron);
+  margin-top: 10px;
+  padding-top: 10px;
+  font-size: 1.1rem;
+}
+
+/* Timeline de progreso */
+.timeline-pedido {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 25px 0;
+  padding: 20px 10px;
+  background-color: var(--mimo-gris-claro);
+  border-radius: 8px;
+}
+
+.paso-timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.icono-paso {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: #ccc;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  border: 3px solid #ccc;
+  transition: all 0.3s;
+}
+
+.paso-completado .icono-paso {
+  background-color: var(--mimo-exito);
+  border-color: var(--mimo-exito);
+}
+
+.paso-activo .icono-paso {
+  background-color: var(--mimo-amarillo);
+  border-color: var(--mimo-marron);
+  color: var(--mimo-marron);
+  animation: pulsar 1.5s infinite;
+}
+
+@keyframes pulsar {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.label-paso {
+  font-size: 0.85rem;
+  color: #666;
+  text-align: center;
+}
+
+.paso-completado .label-paso {
+  color: var(--mimo-exito);
+  font-weight: bold;
+}
+
+.paso-activo .label-paso {
+  color: var(--mimo-marron);
+  font-weight: bold;
+}
+
+.linea-timeline {
+  flex: 1;
+  height: 3px;
+  background-color: #ccc;
+  margin: 0 -10px;
+  margin-bottom: 30px;
+}
+
+.linea-completada {
+  background-color: var(--mimo-exito);
+}
+
+/* Acciones del pedido */
+.acciones-pedido {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.acciones-pedido .btn {
+  flex: 1;
+  min-width: 120px;
+}
+
 /* ===== RESPONSIVE (Tablets y móviles) ===== */
 @media (max-width: 768px) {
   .contenedor-central {
@@ -1664,6 +2094,82 @@ textarea.input-datos-envio {
   .btn-enviar-datos,
   .btn-omitir {
     flex: 1;
+  }
+
+  /* Confirmación responsive */
+  .contenido-confirmacion {
+    margin: 20px auto;
+    padding: 25px;
+  }
+
+  .titulo-confirmacion {
+    font-size: 1.6rem;
+  }
+
+  .info-pedido-confirmacion {
+    padding: 20px;
+  }
+
+  .dato-pedido {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .acciones-confirmacion {
+    gap: 10px;
+  }
+
+  /* Seguimiento responsive */
+  .contenido-seguimiento {
+    padding: 15px;
+  }
+
+  .header-seguimiento {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .titulo-seguimiento {
+    font-size: 1.6rem;
+  }
+
+  .filtros-seguimiento {
+    width: 100%;
+  }
+
+  .filtro-estado,
+  .buscar-pedido {
+    width: 100%;
+  }
+
+  .card-pedido {
+    padding: 20px;
+  }
+
+  .header-card-pedido {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .timeline-pedido {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .linea-timeline {
+    width: 3px;
+    height: 40px;
+    margin: 0;
+  }
+
+  .acciones-pedido {
+    flex-direction: column;
+  }
+
+  .acciones-pedido .btn {
+    width: 100%;
   }
 }
 

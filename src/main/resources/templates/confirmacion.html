@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmación de Pedido | Helados Mimo's</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER -->
+    <header>
+      <a th:href="@{/catalogo}">
+        <!-- NOTA: Logo Mimo's -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a href="#">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
+        </a>
+        <a th:href="@{/seguimiento}">
+          <img th:src="@{/img/pedidos-icon.svg}" alt="Mis Pedidos" src="https://via.placeholder.com/32?text=P">
+          <span>Mis Pedidos</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL: CONFIRMACIÓN -->
+    <div class="contenido-confirmacion">
+      
+      <!-- Ícono de éxito -->
+      <div class="icono-exito">
+        <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="45" fill="#28a745" opacity="0.2"/>
+          <circle cx="50" cy="50" r="40" stroke="#28a745" stroke-width="3"/>
+          <path d="M30 50 L45 65 L70 35" stroke="#28a745" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <!-- Mensaje principal -->
+      <h1 class="titulo-confirmacion">¡Pedido confirmado!</h1>
+      <p class="subtitulo-confirmacion">Gracias por tu compra, <strong th:text="${usuario.nombre}">Usuario</strong></p>
+
+      <!-- Información del pedido -->
+      <div class="info-pedido-confirmacion">
+        <div class="dato-pedido">
+          <span class="label-dato">Número de pedido:</span>
+          <span class="valor-dato pedido-numero" th:text="'#' + ${pedido.idPedido}">#12345</span>
+        </div>
+        
+        <div class="dato-pedido">
+          <span class="label-dato">Fecha:</span>
+          <span class="valor-dato" th:text="${#temporals.format(pedido.fechaCreacion, 'dd/MM/yyyy HH:mm')}">13/11/2025 22:15</span>
+        </div>
+
+        <div class="dato-pedido">
+          <span class="label-dato">Total pagado:</span>
+          <span class="valor-dato valor-total">
+            $<span th:text="${#numbers.formatDecimal(pedido.total, 1, 'POINT', 0, 'COMMA')}">75,000</span>
+          </span>
+        </div>
+
+        <div class="dato-pedido">
+          <span class="label-dato">Método de pago:</span>
+          <span class="valor-dato" th:text="${pedido.metodoPago == 'TARJETA_CREDITO_DEBITO' ? 'Tarjeta de crédito/débito' : 
+                                                 pedido.metodoPago == 'EFECTIVO_CONTRA_ENTREGA' ? 'Efectivo contra entrega' : 
+                                                 pedido.metodoPago == 'DATAFONO_CONTRA_ENTREGA' ? 'Datáfono contra entrega' : 
+                                                 'PayPal'}">Tarjeta</span>
+        </div>
+
+        <div class="dato-pedido">
+          <span class="label-dato">Estado:</span>
+          <span class="badge-estado badge-confirmado">
+            <span th:text="${pedido.estadoPedido == 'PENDIENTE_PAGO' ? 'Pendiente de pago' :
+                            pedido.estadoPedido == 'PAGO_CONFIRMADO' ? 'Pago confirmado' :
+                            pedido.estadoPedido == 'EN_PREPARACION' ? 'En preparación' :
+                            pedido.estadoPedido == 'EN_CAMINO' ? 'En camino' :
+                            pedido.estadoPedido == 'ENTREGADO' ? 'Entregado' : 
+                            'Cancelado'}">Pago confirmado</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Instrucciones según método de pago -->
+      <div th:if="${pedido.metodoPago == 'EFECTIVO_CONTRA_ENTREGA' or pedido.metodoPago == 'DATAFONO_CONTRA_ENTREGA'}" 
+           class="instrucciones-entrega">
+        <h3 class="titulo-instrucciones">Instrucciones de entrega</h3>
+        <div class="contenido-instrucciones">
+          <p th:if="${pedido.metodoPago == 'EFECTIVO_CONTRA_ENTREGA'}">
+            💵 <strong>Pago en efectivo:</strong> Por favor, ten el monto exacto disponible al momento de la entrega.
+          </p>
+          <p th:if="${pedido.metodoPago == 'DATAFONO_CONTRA_ENTREGA'}">
+            💳 <strong>Pago con datáfono:</strong> El domiciliario llevará un datáfono para procesar tu pago con tarjeta.
+          </p>
+          <p>
+            📍 <strong>Dirección de entrega:</strong><br>
+            <span th:text="${pedido.direccionEnvio}">Calle 123 #45-67</span>
+          </p>
+          <p>
+            📞 <strong>Teléfono de contacto:</strong><br>
+            <span th:text="${pedido.telefonoContacto}">3001234567</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Mensaje de correo -->
+      <div class="mensaje-correo">
+        <p>📧 Hemos enviado un correo de confirmación a <strong th:text="${usuario.correoElectronico}">correo@ejemplo.com</strong></p>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="acciones-confirmacion">
+        <!-- Botón de factura (si existe) -->
+        <a th:if="${tieneFactura}" 
+           th:href="@{/factura/{id}(id=${pedido.idPedido})}" 
+           class="btn btn-outline-primary btn-mimo">
+          📄 Ver factura
+        </a>
+
+        <!-- Si no tiene factura, ofrecer generarla -->
+        <a th:unless="${tieneFactura}" 
+           th:href="@{/factura/formulario/{id}(id=${pedido.idPedido})}" 
+           class="btn btn-outline-primary btn-mimo">
+          📄 Generar factura
+        </a>
+
+        <a th:href="@{/seguimiento}" class="btn btn-outline-secondary btn-mimo">
+          📦 Ver mis pedidos
+        </a>
+
+        <a th:href="@{/catalogo}" class="btn btn-primary btn-mimo">
+          🛒 Seguir comprando
+        </a>
+      </div>
+
+      <!-- Tiempo estimado de entrega -->
+      <div class="tiempo-entrega">
+        <p>⏱️ Tiempo estimado de entrega: <strong>30-45 minutos</strong></p>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-links">
+        <a href="#">Convenios</a>
+        <a href="#">Encuéntranos</a>
+        <a href="#">Trabaja con nosotros</a>
+        <a href="#">Contacto</a>
+        <a href="#">Políticas</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Animación de entrada (opcional) -->
+  <script>
+    // Animación suave al cargar
+    document.addEventListener('DOMContentLoaded', function() {
+      const icono = document.querySelector('.icono-exito');
+      if (icono) {
+        icono.style.animation = 'aparecer 0.5s ease-out';
+      }
+    });
+  </script>
+</body>
+</html>
