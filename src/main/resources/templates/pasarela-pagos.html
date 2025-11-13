@@ -10,6 +10,18 @@
   
   <!-- CSS Custom de Mimo's -->
   <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+
+  <!-- Estilos para placeholders más claros -->
+  <style>
+    ::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+    input::placeholder {
+      color: #999 !important;
+      opacity: 0.6 !important;
+    }
+  </style>
 </head>
 <body>
   <div class="contenedor-central">
@@ -214,13 +226,13 @@
                 <!-- Nombre del titular -->
                 <div class="col-12 mb-3">
                   <label for="nombreTitular" class="form-label label-pago">Nombre del titular <span class="texto-obligatorio">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control input-pago" 
-                    id="nombreTitular" 
-                    name="nombreTitular" 
+                  <input
+                    type="text"
+                    class="form-control input-pago"
+                    id="nombreTitular"
+                    name="nombreTitular"
                     placeholder="Nombre como aparece en la tarjeta"
-                    th:value="${usuario.nombreCompleto}">
+                    th:value="${usuario != null} ? ${usuario.nombre} + ' ' + ${usuario.apellido} : ''">
                 </div>
 
                 <!-- Tipo de documento -->
