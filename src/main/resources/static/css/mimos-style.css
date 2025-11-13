@@ -1304,6 +1304,109 @@ textarea.input-datos-envio {
   font-size: 1rem;
 }
 
+/* ===== FACTURACIÓN ===== */
+
+.contenido-facturacion {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 40px;
+  background-color: var(--mimo-blanco);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.titulo-facturacion {
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-align: center;
+  color: var(--mimo-marron);
+  margin-bottom: 10px;
+}
+
+.subtitulo-facturacion {
+  font-size: 1rem;
+  text-align: center;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.form-facturacion {
+  margin-top: 20px;
+}
+
+.label-facturacion {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--mimo-marron);
+}
+
+.input-facturacion {
+  font-size: 1rem;
+  padding: 12px;
+  border: 2px solid var(--mimo-marron);
+  border-radius: 25px;
+}
+
+.input-facturacion:focus {
+  border-color: var(--mimo-amarillo);
+  box-shadow: 0 0 0 0.2rem rgba(255, 215, 0, 0.25);
+}
+
+.form-select.input-facturacion {
+  cursor: pointer;
+}
+
+.opciones-razon-social {
+  display: flex;
+  gap: 30px;
+  padding: 15px 0;
+}
+
+.form-check-inline {
+  font-size: 1rem;
+}
+
+.form-check-input:checked {
+  background-color: var(--mimo-amarillo);
+  border-color: var(--mimo-marron);
+}
+
+.botones-facturacion {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.btn-enviar-datos {
+  flex: 2;
+  padding: 15px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 25px;
+}
+
+.btn-omitir {
+  flex: 1;
+  padding: 15px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 25px;
+}
+
+.info-fiscal {
+  margin-top: 30px;
+  padding: 15px;
+  background-color: var(--mimo-amarillo-claro);
+  border-left: 4px solid var(--mimo-amarillo);
+  border-radius: 8px;
+}
+
+.info-fiscal p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--mimo-marron);
+}
+
 /* ===== RESPONSIVE (Tablets y móviles) ===== */
 @media (max-width: 768px) {
   .contenedor-central {
@@ -1537,6 +1640,30 @@ textarea.input-datos-envio {
 
   .btn-finalizar-compra {
     font-size: 1.1rem;
+  }
+
+  /* Facturación responsive */
+  .contenido-facturacion {
+    margin: 20px auto;
+    padding: 25px;
+  }
+
+  .titulo-facturacion {
+    font-size: 1.5rem;
+  }
+
+  .opciones-razon-social {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .botones-facturacion {
+    flex-direction: column;
+  }
+
+  .btn-enviar-datos,
+  .btn-omitir {
+    flex: 1;
   }
 }
 

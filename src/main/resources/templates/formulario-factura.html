@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facturación | Helados Mimo's</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- CSS Custom de Mimo's -->
+  <link rel="stylesheet" th:href="@{/css/mimos-style.css}">
+</head>
+<body>
+  <div class="contenedor-central">
+    <!-- HEADER -->
+    <header>
+      <a th:href="@{/catalogo}">
+        <!-- NOTA: Logo Mimo's -->
+        <img th:src="@{/img/logo-mimos.png}" alt="Logo Mimo's" id="logo" src="https://via.placeholder.com/150x100?text=LOGO+MIMOS">
+      </a>
+      <div id="barra-superior">
+        <a href="#">
+          <img th:src="@{/img/soporte-icon.svg}" alt="Soporte" src="https://via.placeholder.com/32?text=S">
+          <span>Soporte</span>
+        </a>
+        <a th:href="@{/catalogo}">
+          <img th:src="@{/img/catalogo-icon.svg}" alt="Catálogo" src="https://via.placeholder.com/32?text=C">
+          <span>Catálogo</span>
+        </a>
+        <a th:href="@{/carrito}">
+          <img th:src="@{/img/carrito-icon.svg}" alt="Carrito" src="https://via.placeholder.com/32?text=Ca">
+          <span>Carrito</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL: FACTURACIÓN -->
+    <div class="contenido-facturacion">
+      
+      <!-- Título -->
+      <h1 class="titulo-facturacion">Facturación</h1>
+      <p class="subtitulo-facturacion">Ingresa los siguientes datos para generar tu factura</p>
+
+      <!-- Mensaje de error si existe -->
+      <div th:if="${error}" class="alert alert-danger alert-custom" role="alert">
+        <p th:text="${error}">Error al generar factura</p>
+      </div>
+
+      <!-- FORMULARIO DE FACTURACIÓN -->
+      <form th:action="@{/factura/generar}" method="POST" class="form-facturacion">
+        
+        <!-- Campo oculto con ID del pedido -->
+        <input type="hidden" name="idPedido" th:value="${idPedido}">
+
+        <!-- NÚMERO DE PEDIDO (readonly, informativo) -->
+        <div class="mb-3">
+          <label for="numeroPedido" class="form-label label-facturacion">#Pedido</label>
+          <input 
+            type="text" 
+            class="form-control input-facturacion input-readonly" 
+            id="numeroPedido" 
+            th:value="${idPedido}"
+            readonly>
+          <div class="form-text texto-ayuda">
+            Este es el número de tu pedido
+          </div>
+        </div>
+
+        <!-- RAZÓN SOCIAL (Tipo de persona) -->
+        <div class="mb-3">
+          <label class="form-label label-facturacion">
+            Razón social <span class="texto-obligatorio">*</span>
+          </label>
+          <div class="opciones-razon-social">
+            <div class="form-check form-check-inline">
+              <input 
+                class="form-check-input" 
+                type="radio" 
+                name="razonSocial" 
+                id="radioPersonaFisica" 
+                value="PERSONA_FISICA"
+                checked>
+              <label class="form-check-label" for="radioPersonaFisica">
+                Persona física
+              </label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input 
+                class="form-check-input" 
+                type="radio" 
+                name="razonSocial" 
+                id="radioPersonaMoral" 
+                value="PERSONA_MORAL">
+              <label class="form-check-label" for="radioPersonaMoral">
+                Persona moral
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOMBRE COMPLETO / RAZÓN SOCIAL -->
+        <div class="mb-3">
+          <label for="nombreCompleto" class="form-label label-facturacion">
+            Nombre completo <span class="texto-obligatorio">*</span>
+          </label>
+          <input 
+            type="text" 
+            class="form-control input-facturacion" 
+            id="nombreCompleto" 
+            name="nombreCompleto" 
+            placeholder="Nombre completo o razón social de la empresa"
+            required
+            th:value="${usuario.nombreCompleto}">
+          <div class="form-text texto-ayuda">
+            Para persona moral, ingresa el nombre legal de la empresa
+          </div>
+        </div>
+
+        <!-- NIT / RFC / CÉDULA -->
+        <div class="mb-3">
+          <label for="nit" class="form-label label-facturacion">
+            NIT / RFC / Cédula <span class="texto-obligatorio">*</span>
+          </label>
+          <input 
+            type="text" 
+            class="form-control input-facturacion" 
+            id="nit" 
+            name="nit" 
+            placeholder="123456789-0"
+            required>
+          <div class="form-text texto-ayuda">
+            Número de identificación fiscal
+          </div>
+        </div>
+
+        <!-- DIRECCIÓN FISCAL -->
+        <div class="mb-3">
+          <label class="form-label label-facturacion">
+            Dirección <span class="texto-obligatorio">*</span>
+          </label>
+
+          <!-- Dirección de la calle -->
+          <input 
+            type="text" 
+            class="form-control input-facturacion mb-2" 
+            name="direccionCalle" 
+            placeholder="Dirección de la calle"
+            required
+            th:value="${usuario.direccion}">
+
+          <!-- Ciudad -->
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <input 
+                type="text" 
+                class="form-control input-facturacion" 
+                name="ciudad" 
+                placeholder="Ciudad"
+                required
+                th:value="${usuario.ciudad}">
+            </div>
+
+            <!-- Código Postal -->
+            <div class="col-md-6 mb-2">
+              <input 
+                type="text" 
+                class="form-control input-facturacion" 
+                name="codigoPostal" 
+                placeholder="Código postal"
+                pattern="[0-9]{5,6}"
+                th:value="${usuario.codigoPostal}">
+            </div>
+          </div>
+
+          <!-- Estado/Provincia -->
+          <select 
+            class="form-select input-facturacion" 
+            name="estadoProvincia" 
+            required>
+            <option value="" selected>Estado/Provincia</option>
+            <option value="Amazonas" th:selected="${usuario.estadoProvincia == 'Amazonas'}">Amazonas</option>
+            <option value="Antioquia" th:selected="${usuario.estadoProvincia == 'Antioquia'}">Antioquia</option>
+            <option value="Arauca" th:selected="${usuario.estadoProvincia == 'Arauca'}">Arauca</option>
+            <option value="Atlántico" th:selected="${usuario.estadoProvincia == 'Atlántico'}">Atlántico</option>
+            <option value="Bolívar" th:selected="${usuario.estadoProvincia == 'Bolívar'}">Bolívar</option>
+            <option value="Boyacá" th:selected="${usuario.estadoProvincia == 'Boyacá'}">Boyacá</option>
+            <option value="Caldas" th:selected="${usuario.estadoProvincia == 'Caldas'}">Caldas</option>
+            <option value="Caquetá" th:selected="${usuario.estadoProvincia == 'Caquetá'}">Caquetá</option>
+            <option value="Casanare" th:selected="${usuario.estadoProvincia == 'Casanare'}">Casanare</option>
+            <option value="Cauca" th:selected="${usuario.estadoProvincia == 'Cauca'}">Cauca</option>
+            <option value="Cesar" th:selected="${usuario.estadoProvincia == 'Cesar'}">Cesar</option>
+            <option value="Chocó" th:selected="${usuario.estadoProvincia == 'Chocó'}">Chocó</option>
+            <option value="Córdoba" th:selected="${usuario.estadoProvincia == 'Córdoba'}">Córdoba</option>
+            <option value="Cundinamarca" th:selected="${usuario.estadoProvincia == 'Cundinamarca'}">Cundinamarca</option>
+            <option value="Guainía" th:selected="${usuario.estadoProvincia == 'Guainía'}">Guainía</option>
+            <option value="Guaviare" th:selected="${usuario.estadoProvincia == 'Guaviare'}">Guaviare</option>
+            <option value="Huila" th:selected="${usuario.estadoProvincia == 'Huila'}">Huila</option>
+            <option value="La Guajira" th:selected="${usuario.estadoProvincia == 'La Guajira'}">La Guajira</option>
+            <option value="Magdalena" th:selected="${usuario.estadoProvincia == 'Magdalena'}">Magdalena</option>
+            <option value="Meta" th:selected="${usuario.estadoProvincia == 'Meta'}">Meta</option>
+            <option value="Nariño" th:selected="${usuario.estadoProvincia == 'Nariño'}">Nariño</option>
+            <option value="Norte de Santander" th:selected="${usuario.estadoProvincia == 'Norte de Santander'}">Norte de Santander</option>
+            <option value="Putumayo" th:selected="${usuario.estadoProvincia == 'Putumayo'}">Putumayo</option>
+            <option value="Quindío" th:selected="${usuario.estadoProvincia == 'Quindío'}">Quindío</option>
+            <option value="Risaralda" th:selected="${usuario.estadoProvincia == 'Risaralda'}">Risaralda</option>
+            <option value="San Andrés y Providencia" th:selected="${usuario.estadoProvincia == 'San Andrés y Providencia'}">San Andrés y Providencia</option>
+            <option value="Santander" th:selected="${usuario.estadoProvincia == 'Santander'}">Santander</option>
+            <option value="Sucre" th:selected="${usuario.estadoProvincia == 'Sucre'}">Sucre</option>
+            <option value="Tolima" th:selected="${usuario.estadoProvincia == 'Tolima'}">Tolima</option>
+            <option value="Valle del Cauca" th:selected="${usuario.estadoProvincia == 'Valle del Cauca'}">Valle del Cauca</option>
+            <option value="Vaupés" th:selected="${usuario.estadoProvincia == 'Vaupés'}">Vaupés</option>
+            <option value="Vichada" th:selected="${usuario.estadoProvincia == 'Vichada'}">Vichada</option>
+          </select>
+        </div>
+
+        <!-- TELÉFONO -->
+        <div class="mb-3">
+          <label for="telefono" class="form-label label-facturacion">
+            Teléfono <span class="texto-obligatorio">*</span>
+          </label>
+          <input 
+            type="tel" 
+            class="form-control input-facturacion" 
+            id="telefono" 
+            name="telefono" 
+            placeholder="3001234567"
+            pattern="[0-9]{10}"
+            required
+            th:value="${usuario.telefono}">
+        </div>
+
+        <!-- CORREO ELECTRÓNICO -->
+        <div class="mb-4">
+          <label for="correoElectronico" class="form-label label-facturacion">
+            Correo electrónico <span class="texto-obligatorio">*</span>
+          </label>
+          <input 
+            type="email" 
+            class="form-control input-facturacion" 
+            id="correoElectronico" 
+            name="correoElectronico" 
+            placeholder="ejemplo@correo.com"
+            required
+            th:value="${usuario.correoElectronico}">
+          <div class="form-text texto-ayuda">
+            Te enviaremos la factura a este correo
+          </div>
+        </div>
+
+        <!-- NOTA SOBRE CAMPOS OBLIGATORIOS -->
+        <div class="nota-campos">
+          <p><span class="texto-obligatorio">*</span> Campos obligatorios</p>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="botones-facturacion">
+          <button type="submit" class="btn btn-primary btn-mimo btn-enviar-datos">
+            Enviar datos
+          </button>
+          <a th:href="@{/confirmacion/{id}(id=${idPedido})}" class="btn btn-secondary btn-mimo btn-omitir">
+            Omitir factura
+          </a>
+        </div>
+      </form>
+
+      <!-- INFORMACIÓN FISCAL -->
+      <div class="info-fiscal">
+        <p>
+          📄 La factura se generará automáticamente con IVA del 19% y se enviará a tu correo electrónico.
+        </p>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-links">
+        <a href="#">Convenios</a>
+        <a href="#">Encuéntranos</a>
+        <a href="#">Trabaja con nosotros</a>
+        <a href="#">Contacto</a>
+        <a href="#">Políticas</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- JS mínimo: Validación de teléfono -->
+  <script>
+    // Validar formato de teléfono
+    const inputTelefono = document.getElementById('telefono');
+    if (inputTelefono) {
+      inputTelefono.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        if (this.value.length > 10) {
+          this.value = this.value.slice(0, 10);
+        }
+      });
+    }
+
+    // Validar NIT/RFC (solo alfanuméricos y guión)
+    const inputNIT = document.getElementById('nit');
+    if (inputNIT) {
+      inputNIT.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9A-Za-z\-]/g, '');
+      });
+    }
+  </script>
+</body>
+</html>
