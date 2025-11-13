@@ -49,9 +49,16 @@
 
     <!-- CONTENIDO PRINCIPAL: PASARELA DE PAGOS -->
     <div class="contenido-pasarela">
-      
+
       <!-- Título -->
       <h1 class="titulo-pasarela">Pasarela de pagos</h1>
+
+      <!-- Mensaje de error (si existe) -->
+      <div th:if="${param.error != null}" class="alert alert-danger alert-dismissible fade show" role="alert" style="max-width: 900px; margin: 0 auto 2rem;">
+        <strong>Error al procesar el pago:</strong>
+        <span th:text="${param.error[0]}">Error desconocido</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
 
       <!-- Indicador de progreso -->
       <div class="progreso-checkout">
@@ -212,12 +219,12 @@
 
                 <!-- CVV -->
                 <div class="col-md-6 mb-3">
-                  <label for="cvv" class="form-label label-pago">Código de seguridad <span class="texto-obligatorio">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control input-pago" 
-                    id="cvv" 
-                    name="cvv" 
+                  <label for="codigoCVV" class="form-label label-pago">Código de seguridad <span class="texto-obligatorio">*</span></label>
+                  <input
+                    type="text"
+                    class="form-control input-pago"
+                    id="codigoCVV"
+                    name="codigoCVV"
                     placeholder="CVV"
                     maxlength="3"
                     pattern="[0-9]{3}">
@@ -450,7 +457,7 @@
     }
 
     // Formatear CVV (solo 3 números)
-    const inputCVV = document.getElementById('cvv');
+    const inputCVV = document.getElementById('codigoCVV');
     if (inputCVV) {
       inputCVV.addEventListener('input', function(e) {
         e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 3);
@@ -463,56 +470,60 @@
 
       if (metodoPago === 'TARJETA_CREDITO_EN_LINEA') {
         // Validar tarjeta
-        const numeroTarjeta = document.getElementById('numeroTarjeta').value.replace(/\s/g, '');
-        const fechaExp = document.getElementById('fechaExpiracion').value;
-        const cvv = document.getElementById('cvv').value;
+        const numeroTarjetaInput = document.getElementById('numeroTarjeta');
+        const fechaExpInput = document.getElementById('fechaExpiracion');
+        const cvvInput = document.getElementById('codigoCVV');
+
+        const numeroTarjeta = numeroTarjetaInput.value.replace(/\s/g, '');
+        const fechaExp = fechaExpInput.value;
+        const cvv = cvvInput.value;
         const tipoDoc = document.getElementById('tipoDocumento').value;
         const numeroDoc = document.getElementById('numeroDocumento').value;
-        
+
         // Validar número de tarjeta (16 dígitos)
         if (numeroTarjeta.length !== 16) {
           e.preventDefault();
           alert('El número de tarjeta debe tener 16 dígitos');
-          document.getElementById('numeroTarjeta').focus();
+          numeroTarjetaInput.focus();
           return false;
         }
-        
+
         // Validar fecha de expiración (formato MM / AA)
         const fechaMatch = fechaExp.match(/^(\d{2}) \/ (\d{2})$/);
         if (!fechaMatch) {
           e.preventDefault();
           alert('Formato de fecha inválido. Use MM / AA');
-          document.getElementById('fechaExpiracion').focus();
+          fechaExpInput.focus();
           return false;
         }
-        
+
         const mes = parseInt(fechaMatch[1]);
         const anio = parseInt('20' + fechaMatch[2]);
         const ahora = new Date();
         const fechaTarjeta = new Date(anio, mes - 1);
-        
+
         if (mes < 1 || mes > 12) {
           e.preventDefault();
           alert('Mes inválido (01-12)');
-          document.getElementById('fechaExpiracion').focus();
+          fechaExpInput.focus();
           return false;
         }
-        
+
         if (fechaTarjeta < ahora) {
           e.preventDefault();
           alert('La tarjeta está vencida');
-          document.getElementById('fechaExpiracion').focus();
+          fechaExpInput.focus();
           return false;
         }
-        
+
         // Validar CVV (3 dígitos)
         if (cvv.length !== 3) {
           e.preventDefault();
           alert('El CVV debe tener 3 dígitos');
-          document.getElementById('cvv').focus();
+          cvvInput.focus();
           return false;
         }
-        
+
         // Validar tipo de documento
         if (!tipoDoc) {
           e.preventDefault();
@@ -520,7 +531,7 @@
           document.getElementById('tipoDocumento').focus();
           return false;
         }
-        
+
         // Validar número de documento
         if (!numeroDoc || numeroDoc.trim() === '') {
           e.preventDefault();
@@ -528,8 +539,15 @@
           document.getElementById('numeroDocumento').focus();
           return false;
         }
+
+        // LIMPIAR DATOS ANTES DE ENVIAR AL BACKEND
+        // Remover espacios del número de tarjeta
+        numeroTarjetaInput.value = numeroTarjeta;
+
+        // Convertir fecha de "MM / AA" a "MM/AA"
+        fechaExpInput.value = fechaMatch[1] + '/' + fechaMatch[2];
       }
-      
+
       // Si pasa todas las validaciones, deshabilitar botón para evitar doble clic
       document.getElementById('btnFinalizar').disabled = true;
       document.getElementById('btnFinalizar').textContent = 'Procesando...';
