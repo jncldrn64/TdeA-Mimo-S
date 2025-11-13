@@ -845,6 +845,33 @@ test_rf05_stock_warnings() {
     fi
 }
 
+# ==================== COMPLETAR DATOS DE ENVÍO ====================
+
+completar_datos_envio() {
+    print_section "COMPLETAR DATOS DE ENVÍO (REQUERIDO PARA CHECKOUT)"
+
+    # Completar datos de envío necesarios para checkout
+    log_request "POST" "/datos-envio/guardar"
+    RESPONSE=$(curl -s -b $COOKIES -c $COOKIES -X POST \
+        -d "telefono=3001234567" \
+        -d "direccion=Calle 50 # 45-23, Apto 301" \
+        -d "ciudad=Medellin" \
+        -d "codigoPostal=050001" \
+        -d "estadoProvincia=Antioquia" \
+        -d "informacionAdicional=Porteria 24h" \
+        "$WEB_URL/datos-envio/guardar" 2>&1)
+    log_response "$RESPONSE"
+
+    # Verificar redirección exitosa al carrito
+    if echo "$RESPONSE" | grep -qi "carrito\|helados mimo"; then
+        echo -e "${GREEN}✓ Datos de envío completados exitosamente${NC}"
+        log_info "Datos de envío guardados"
+    else
+        echo -e "${YELLOW}⚠ Respuesta inesperada al guardar datos de envío${NC}"
+        log_warning "Respuesta inesperada en datos de envío"
+    fi
+}
+
 # ==================== FLUJO 10: CHECKOUT Y GENERACIÓN DE PEDIDO ====================
 
 test_rf05_checkout() {
@@ -1596,6 +1623,7 @@ main() {
     test_rf01_inventario_admin
     test_rf05_carrito_con_sesion
     test_rf05_stock_warnings
+    completar_datos_envio
     test_rf05_checkout
     test_rf02_pagos
     test_rf05_stock_conflicts
