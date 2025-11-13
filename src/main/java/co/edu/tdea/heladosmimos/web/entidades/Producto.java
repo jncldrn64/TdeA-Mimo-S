@@ -32,5 +32,5 @@ public class Producto {
     private Boolean estaActivo;
 
     @Version
-    private Long version;
+    private Long version = 0L; // Inicializar para evitar NullPointerException en optimistic locking
 }
