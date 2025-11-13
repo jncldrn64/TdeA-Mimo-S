@@ -42,12 +42,31 @@ public class ControladorCarrito {
     public String mostrarCarrito(Model model, HttpSession session) {
         try {
             List<ItemCarrito> items = casoDeUsoAccesoCarrito.ejecutarObtenerCarrito();
-            Double total = casoDeUsoAccesoCarrito.ejecutarObtenerTotal();
-
             List<Map<String, Object>> itemsEnriquecidos = enriquecerItemsConProductos(items);
 
-            model.addAttribute("carrito", itemsEnriquecidos);
-            model.addAttribute("totalFinal", total);
+            // Calcular subtotal (suma de todos los items)
+            Double subtotal = itemsEnriquecidos.stream()
+                .mapToDouble(item -> (Double) item.get("subtotal"))
+                .sum();
+
+            // Costo de envío (ficticio por ahora - $5,000)
+            Double costoEnvio = 5000.0;
+
+            // IVA (19% del subtotal)
+            Double iva = subtotal * 0.19;
+
+            // Descuento (0 por ahora)
+            Double descuento = 0.0;
+
+            // Total final
+            Double total = subtotal + costoEnvio + iva - descuento;
+
+            model.addAttribute("items", itemsEnriquecidos);
+            model.addAttribute("subtotal", subtotal);
+            model.addAttribute("costoEnvio", costoEnvio);
+            model.addAttribute("iva", iva);
+            model.addAttribute("descuento", descuento);
+            model.addAttribute("total", total);
             model.addAttribute("idProductoEnEdicion", session.getAttribute("idProductoEnEdicion"));
             model.addAttribute("cantidadTotalItems", servicioCarritoCompras.contarTotalDeProductos());
 
@@ -127,14 +146,16 @@ public class ControladorCarrito {
             itemEnriquecido.put("precioUnitario", item.getPrecioUnitarioAlAgregar());
             itemEnriquecido.put("subtotal", item.getPrecioUnitarioAlAgregar() * item.getCantidad());
 
+            // Agregar objeto producto completo para acceso en HTML
             if (producto != null) {
-                itemEnriquecido.put("nombreProducto", producto.getNombreProducto());
-                itemEnriquecido.put("urlImagen", producto.getUrlImagen());
-                itemEnriquecido.put("stockDisponible", producto.getStockDisponible());
+                itemEnriquecido.put("producto", producto);
             } else {
-                itemEnriquecido.put("nombreProducto", "Producto no disponible");
-                itemEnriquecido.put("urlImagen", "/images/placeholder.png");
-                itemEnriquecido.put("stockDisponible", 0);
+                // Crear producto placeholder si no existe
+                Producto productoPlaceholder = new Producto();
+                productoPlaceholder.setNombreProducto("Producto no disponible");
+                productoPlaceholder.setUrlImagen("/images/placeholder.png");
+                productoPlaceholder.setStockDisponible(0);
+                itemEnriquecido.put("producto", productoPlaceholder);
             }
 
             return itemEnriquecido;
