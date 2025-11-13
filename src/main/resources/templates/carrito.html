@@ -44,6 +44,10 @@
           <img th:src="@{/img/envio-icon.svg}" alt="Datos de Envío" src="https://via.placeholder.com/32?text=E">
           <span>Datos de Envío</span>
         </a>
+        <a th:href="@{/pedidos}" th:if="${usuario != null}">
+          <img th:src="@{/img/pedidos-icon.svg}" alt="Mis Pedidos" src="https://via.placeholder.com/32?text=P">
+          <span>Mis Pedidos</span>
+        </a>
       </div>
     </header>
 
